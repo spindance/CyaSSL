@@ -301,12 +301,14 @@
 #endif
 
 #ifdef CYASSL_STM32F2
+    #define SIZEOF_LONG 4
     #define SIZEOF_LONG_LONG 8
+    #define LITTLE_ENDIAN_ORDER
     #define NO_DEV_RANDOM
     #define NO_CYASSL_DIR
     #define NO_RABBIT
     #define STM32F2_RNG
-    #define STM32F2_CRYPTO
+    #undef  STM32F2_CRYPTO
     #define NO_FILESYSTEM
 #endif
 
@@ -548,6 +550,28 @@
 #endif
 
 /* Place any other flags or defines here */
+#ifdef BIG_ENDIAN_ORDER
+#error "AL2 Bridge is not BIG_ENDIAN"
+#endif
+#ifndef LITTLE_ENDIAN_ORDER
+#error "AL2 Bridge is Little Endian"
+#endif
+
+#if (SIZEOF_LONG_LONG == 8)
+// OK
+#else
+#error Size of long long should be 8.
+#endif 
+
+#if (SIZEOF_LONG == 4)
+// OK
+#else
+#error Size of long should be 4.
+#endif 
+
+#ifdef  STM32F2_CRYPTO
+#error  Do not want STM32F2_CRYPTO defined for now!
+#endif
 
 
 #ifdef __cplusplus

@@ -290,6 +290,12 @@ CYASSL_API word32 CheckRunTimeSettings(void);
    return 1 if a match otherwise 0 */
 #define CheckCtcSettings() (CTC_SETTINGS == CheckRunTimeSettings())
 
+#ifdef BIG_ENDIAN_ORDER
+#error "AL2 Bridge is Not Big Endian"
+#endif
+#ifndef LITTLE_ENDIAN_ORDER
+#error "AL2 Bridge is Little Endian"
+#endif
 
 #ifdef __cplusplus
     }   /* extern "C" */
