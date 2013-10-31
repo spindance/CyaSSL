@@ -308,7 +308,7 @@
     #define NO_CYASSL_DIR
     #define NO_RABBIT
     #define STM32F2_RNG
-    #undef  STM32F2_CRYPTO
+    #undef STM32F2_CRYPTO
     #define NO_FILESYSTEM
 #endif
 
@@ -570,7 +570,7 @@
 #endif 
 
 #ifdef  STM32F2_CRYPTO
-#error  Do not want STM32F2_CRYPTO defined for now!
+#error  We DO NOT want STM32F2_CRYPTO defined.
 #endif
 
 
