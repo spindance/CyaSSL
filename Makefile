@@ -208,11 +208,13 @@ CFLAGS = $(CFLAGS-y)
 #
 # The following are needed by stm32f4xx.h in the STM Std Perihperal Driver CMSIS code
 #
-CPPFLAGS-$(CONFIG_STM32F437XGXX)        += -D"STM32F427X"
-CPPFLAGS-$(CONFIG_STM32F407XEXX)        += -D"STM32F40XX"
+CPPFLAGS-$(CONFIG_STM32F40_41XXX)       += -D"STM32F40_41xxx" 
+CPPFLAGS-$(CONFIG_STM32F427_437XX)      += -D"STM32F427_437xx"
+CPPFLAGS-$(CONFIG_STM32F429_439XX)      += -D"STM32F429_439xx"
+CPPFLAGS-$(CONFIG_STM32F401XX)          += -D"STM32F401xx"    
+
 CPPFLAGS-y                              += -D"USE_STDPERIPH_DRIVER"
 CPPFLAGS-y                              += -D"USE_STM324xG_EVAL"
-CPPFLAGS-y                              += -D ALIGN_STRUCT_END=__attribute\(\(aligned\(4\)\)\)
 CPPFLAGS-y                              += -D USE_FLOATING_POINT
 CPPFLAGS-y                              += $(INCLUDE_DIRS-y)
 
