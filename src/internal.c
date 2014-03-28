@@ -2386,6 +2386,7 @@ static int Receive(CYASSL* ssl, byte* buf, word32 sz)
 retry:
     recvd = ssl->ctx->CBIORecv(ssl, (char *)buf, (int)sz, ssl->IOCB_ReadCtx);
     if (recvd < 0)
+        logError("ssl->ctx->CBIORecv returned %d", recvd);
         switch (recvd) {
             case CYASSL_CBIO_ERR_GENERAL:        /* general/unknown error */
                 return -1;
@@ -2524,9 +2525,11 @@ int SendBuffered(CYASSL* ssl)
                     break;
 
                 default:
+                    CYASSL_ERROR(SOCKET_ERROR_E);
                     return SOCKET_ERROR_E;
             }
 
+            CYASSL_ERROR(SOCKET_ERROR_E);
             return SOCKET_ERROR_E;
         }
 
@@ -4358,6 +4361,7 @@ int DoApplicationData(CYASSL* ssl, byte* input, word32* inOutIdx)
     int    ivExtra = 0;
     byte*  rawData = input + idx;  /* keep current  for hmac */
 #ifdef HAVE_LIBZ
+#error should not be used.
     byte   decomp[MAX_RECORD_SIZE + MAX_COMP_EXTRA];
 #endif
 
@@ -4493,8 +4497,10 @@ static int GetInputData(CYASSL *ssl, word32 size)
                      ssl->buffers.inputBuffer.buffer +
                      ssl->buffers.inputBuffer.length, 
                      inSz);
-        if (in == -1)
+        if (in == -1) {
+            logError("Receive returned %d",SOCKET_ERROR_E);
             return SOCKET_ERROR_E;
+        }
    
         if (in == WANT_READ)
             return WANT_READ;
@@ -4594,16 +4600,20 @@ int ProcessReply(CYASSL* ssl)
 
             /* get header or return error */
             if (!ssl->options.dtls) {
-                if ((ret = GetInputData(ssl, readSz)) < 0)
+                if ((ret = GetInputData(ssl, readSz)) < 0) {
+                    CYASSL_ERROR(ret);
                     return ret;
+                }
             } else {
             #ifdef CYASSL_DTLS
                 /* read ahead may already have header */
                 used = ssl->buffers.inputBuffer.length -
                        ssl->buffers.inputBuffer.idx;
                 if (used < readSz)
-                    if ((ret = GetInputData(ssl, readSz)) < 0)
+                    if ((ret = GetInputData(ssl, readSz)) < 0) {
+                        CYASSL_ERROR(ret);
                         return ret;
+                    }
             #endif
             }
 
@@ -4633,16 +4643,20 @@ int ProcessReply(CYASSL* ssl)
 
             /* get sz bytes or return error */
             if (!ssl->options.dtls) {
-                if ((ret = GetInputData(ssl, ssl->curSize)) < 0)
+                if ((ret = GetInputData(ssl, ssl->curSize)) < 0) {
+                    CYASSL_ERROR(ret);
                     return ret;
+                }
             } else {
             #ifdef CYASSL_DTLS
                 /* read ahead may already have */
                 used = ssl->buffers.inputBuffer.length -
                        ssl->buffers.inputBuffer.idx;
                 if (used < ssl->curSize)
-                    if ((ret = GetInputData(ssl, ssl->curSize)) < 0)
+                    if ((ret = GetInputData(ssl, ssl->curSize)) < 0) {
+                        CYASSL_ERROR(ret);
                         return ret;
+                    }
             #endif  /* CYASSL_DTLS */
             }
 
@@ -4651,8 +4665,10 @@ int ProcessReply(CYASSL* ssl)
                                         ssl->buffers.inputBuffer.length -
                                         ssl->buffers.inputBuffer.idx,
                                         ssl->curSize);
-            if (ret < 0)
+            if (ret < 0) {
+                CYASSL_ERROR(ret);
                 return ret;
+            }
 
             else if (ssl->buffers.inputBuffer.idx ==
                      ssl->buffers.inputBuffer.length) {
@@ -4678,8 +4694,11 @@ int ProcessReply(CYASSL* ssl)
                 continue;
             }
 #endif
-            if (ret != 0)
+            if (ret != 0) {
+                if (ret<0)
+                    CYASSL_ERROR(ret);
                 return ret;
+            }
 
             ssl->options.processReply = getData;
 
@@ -4688,16 +4707,20 @@ int ProcessReply(CYASSL* ssl)
 
             /* get sz bytes or return error */
             if (!ssl->options.dtls) {
-                if ((ret = GetInputData(ssl, ssl->curSize)) < 0)
+                if ((ret = GetInputData(ssl, ssl->curSize)) < 0) {
+                    CYASSL_ERROR(ret);
                     return ret;
+                }
             } else {
 #ifdef CYASSL_DTLS
                 /* read ahead may already have */
                 used = ssl->buffers.inputBuffer.length -
                        ssl->buffers.inputBuffer.idx;
                 if (used < ssl->curSize)
-                    if ((ret = GetInputData(ssl, ssl->curSize)) < 0)
+                    if ((ret = GetInputData(ssl, ssl->curSize)) < 0) {
+                        CYASSL_ERROR(ret);
                         return ret;
+                    }
 #endif
             }
             
@@ -4709,8 +4732,10 @@ int ProcessReply(CYASSL* ssl)
 
             if (ssl->keys.encryptionOn && ssl->keys.decryptedCur == 0) {
                 ret = SanityCheckCipherText(ssl, ssl->curSize);
-                if (ret < 0)
+                if (ret < 0) {
+                    CYASSL_ERROR(ret);
                     return ret;
+                }
 
                 if (atomicUser) {
                 #ifdef ATOMIC_USER
@@ -4776,8 +4801,11 @@ int ProcessReply(CYASSL* ssl)
                                             ssl->buffers.inputBuffer.length);
 #endif
                     }
-                    if (ret != 0)
+                    if (ret != 0) {
+                        if (ret<0)
+                            CYASSL_ERROR(ret);
                         return ret;
+                    }
                     break;
 
                 case change_cipher_spec:
@@ -4823,8 +4851,11 @@ int ProcessReply(CYASSL* ssl)
 
                     #ifdef HAVE_LIBZ
                         if (ssl->options.usingCompression)
-                            if ( (ret = InitStreams(ssl)) != 0)
+                            if ( (ret = InitStreams(ssl)) != 0) {
+                                if (ret<0)
+                                    CYASSL_ERROR(ret);
                                 return ret;
+                            }
                     #endif
                     if (ssl->options.resuming && ssl->options.side ==
                                                               CYASSL_CLIENT_END)
@@ -4851,8 +4882,10 @@ int ProcessReply(CYASSL* ssl)
                            &ssl->buffers.inputBuffer.idx, &type);
                     if (ret == alert_fatal)
                         return FATAL_ERROR;
-                    else if (ret < 0)
+                    else if (ret < 0) {
+                        CYASSL_ERROR(ret);
                         return ret;
+                    }
 
                     /* catch warnings that are handled as errors */
                     if (type == close_notify)
@@ -5505,6 +5538,7 @@ int SendData(CYASSL* ssl, const void* data, int sz)
         byte* sendBuffer = (byte*)data + sent;  /* may switch on comp */
         int   buffSz = len;                       /* may switch on comp */
 #ifdef HAVE_LIBZ
+#error should not be used.
         byte  comp[MAX_RECORD_SIZE + MAX_COMP_EXTRA];
 #endif
 
@@ -5592,6 +5626,7 @@ int ReceiveData(CYASSL* ssl, byte* output, int sz, int peek)
                     CYASSL_MSG("Peer reset or closed, connection done");
                     return 0;     /* peer reset or closed */
                 }
+                CYASSL_ERROR(ssl->error);
             }
             return ssl->error;
         }
@@ -7924,7 +7959,7 @@ static void PickHashSigAlgo(CYASSL* ssl,
 #ifdef HAVE_ECC
         ecc_key            eccKey;
 #endif
-
+        CYASSL_ENTER("SendCertificateVerify");
         (void)idx;
 
         if (ssl->options.sendVerify == SEND_BLANK_CERT)
@@ -7938,12 +7973,15 @@ static void PickHashSigAlgo(CYASSL* ssl,
         output = ssl->buffers.outputBuffer.buffer +
                  ssl->buffers.outputBuffer.length;
 
+        CYASSL_MSG("Calling BuildCertHashes");
+
         BuildCertHashes(ssl, &ssl->certHashes);
 
 #ifdef HAVE_ECC
         ecc_init(&eccKey);
 #endif
 #ifndef NO_RSA
+        CYASSL_MSG("InitRsaKey");
         InitRsaKey(&key, ssl->heap);
         ret = RsaPrivateKeyDecode(ssl->buffers.key.buffer, &idx, &key,
                                   ssl->buffers.key.length);
@@ -7994,6 +8032,8 @@ static void PickHashSigAlgo(CYASSL* ssl,
                 verify[1] = usingEcc ? ecc_dsa_sa_algo : rsa_sa_algo;
                 extraSz = HASH_SIG_SIZE;
             }
+
+            CYASSL_MSG("if (usingEcc)");
 
             if (usingEcc) {
 #ifdef HAVE_ECC
@@ -8070,6 +8110,8 @@ static void PickHashSigAlgo(CYASSL* ssl,
                         doUserRsa = 1;
                 #endif /*HAVE_PK_CALLBACKS */
 
+                CYASSL_MSG("IsAtLeastTLSv1_2");
+
                 if (IsAtLeastTLSv1_2(ssl)) {
 #ifndef NO_OLD_TLS
                     byte* digest = ssl->certHashes.sha;
@@ -8108,6 +8150,7 @@ static void PickHashSigAlgo(CYASSL* ssl,
                 }
 
                 c16toa((word16)length, verify + extraSz); /* prepend hdr */
+                CYASSL_MSG("Going to RsaSign.");
                 if (doUserRsa) {
                 #ifdef HAVE_PK_CALLBACKS
                     #ifndef NO_RSA
@@ -8131,6 +8174,7 @@ static void PickHashSigAlgo(CYASSL* ssl,
             }
 #endif
             if (ret == 0) {
+                CYASSL_MSG("AddHeaders");
                 AddHeaders(output, length + extraSz + VERIFY_HEADER,
                            certificate_verify, ssl);
 
@@ -8143,6 +8187,7 @@ static void PickHashSigAlgo(CYASSL* ssl,
                             return ret;
                     }
                 #endif
+                CYASSL_MSG("Calling HashOutput");
                 HashOutput(ssl, output, sendSz, 0);
             }
         }
@@ -8162,10 +8207,15 @@ static void PickHashSigAlgo(CYASSL* ssl,
                                   output, sendSz, ssl->heap);
             #endif
             ssl->buffers.outputBuffer.length += sendSz;
-            if (ssl->options.groupMessages)
+            if (ssl->options.groupMessages) {
+                CYASSL_LEAVE("SendCertificateVerify",0);
                 return 0;
-            else
-                return SendBuffered(ssl);
+            }
+            else {
+                ret = SendBuffered(ssl);
+                CYASSL_LEAVE("SendCertificateVerify",ret);
+                return ret;
+            }
         }
         else
             return ret;

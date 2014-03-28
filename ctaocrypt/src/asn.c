@@ -679,6 +679,8 @@ int RsaPrivateKeyDecode(const byte* input, word32* inOutIdx, RsaKey* key,
         return CaviumRsaPrivateKeyDecode(input, inOutIdx, key, inSz);
 #endif
 
+    CYASSL_ENTER("RsaPrivateKeyDecode");
+
     if (GetSequence(input, inOutIdx, &length, inSz) < 0)
         return ASN_PARSE_E;
 
@@ -696,6 +698,8 @@ int RsaPrivateKeyDecode(const byte* input, word32* inOutIdx, RsaKey* key,
         GetInt(&key->dQ, input, inOutIdx, inSz) < 0 ||
         GetInt(&key->u,  input, inOutIdx, inSz) < 0 )  return ASN_RSA_KEY_E;
 
+    CYASSL_LEAVE("RsaPrivateKeyDecode", 0);
+
     return 0;
 }
 
@@ -706,6 +710,8 @@ int ToTraditional(byte* input, word32 sz)
 {
     word32 inOutIdx = 0, oid;
     int    version, length;
+
+    CYASSL_ENTER("ToTraditional");
 
     if (GetSequence(input, &inOutIdx, &length, sz) < 0)
         return ASN_PARSE_E;

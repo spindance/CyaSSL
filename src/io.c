@@ -262,6 +262,7 @@ int EmbedReceive(CYASSL *ssl, char *buf, int sz, void *ctx)
         }
     }
     else if (recvd == 0) {
+        logError("0==(int)RECV_FUNCTION(sd=%d, buf=0x%02x, sz=%d, ssl->rflags=0x%02x);",sd,buf,sz,ssl->rflags);
         CYASSL_MSG("Embed receive connection closed");
         return CYASSL_CBIO_ERR_CONN_CLOSE;
     }

@@ -47,11 +47,45 @@ CYASSL_API int CyaSSL_SetLoggingCb(CyaSSL_Logging_cb log_function);
 
 #ifdef DEBUG_CYASSL
 
-    void CYASSL_ENTER(const char* msg);
-    void CYASSL_LEAVE(const char* msg, int ret);
+#  if defined CONFIG_APP && defined CONFIG_FACILITY_INCDNTLOG && defined CONFIG_INCDNTLOG_DEBUG_ENA
 
-    void CYASSL_ERROR(int);
-    void CYASSL_MSG(const char* msg);
+#    define CYASSL_ENTER(m) logCoreApi( \
+    __FUNCTION__, \
+    __LINE__, \
+    eLogLevelDebug, \
+    LOG_ALL_FLAGS_ON, \
+    "CyaSSL Entering %s", m)
+
+#    define CYASSL_LEAVE(m, r) logCoreApi( \
+    __FUNCTION__, \
+    __LINE__, \
+    eLogLevelDebug, \
+    LOG_ALL_FLAGS_ON, \
+    "CyaSSL Leaving %s, return %d", m, r)
+
+#    define CYASSL_ERROR(e) logCoreApi( \
+    __FUNCTION__, \
+    __LINE__, \
+    eLogLevelDebug, \
+    LOG_ALL_FLAGS_ON, \
+    "CyaSSL error occured, error = %d", e )
+
+#    define CYASSL_MSG(m) logCoreApi( \
+    __FUNCTION__, \
+    __LINE__, \
+    eLogLevelDebug, \
+    LOG_ALL_FLAGS_ON, \
+    m )
+
+#  else
+
+      void CYASSL_ENTER(const char* msg);
+      void CYASSL_LEAVE(const char* msg, int ret);
+
+      void CYASSL_ERROR(int);
+      void CYASSL_MSG(const char* msg);
+
+#  endif
 
 #else /* DEBUG_CYASSL   */
 

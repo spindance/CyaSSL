@@ -29,7 +29,7 @@
 #ifdef __cplusplus
     extern "C" {
 #endif
-
+#error TBDRMS Temporary Error to confirm we are not building this file.
 /* Uncomment next line if using IPHONE */
 /* #define IPHONE */
 

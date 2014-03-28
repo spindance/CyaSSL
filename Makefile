@@ -134,11 +134,13 @@ REPO_LIST-y += ../$(THIS_REPO)
 export REPO_LIST = $(REPO_LIST-y)
 
 # Where we get pieces from...
-INCLUDE_DIRS-y                                 += -I.
 INCLUDE_DIRS-$(CONFIG_APP)                     += -I../$(APP_DIR)/include
 INCLUDE_DIRS-$(CONFIG_APP)                     += -I../$(APP_DIR)/include/generated
+INCLUDE_DIRS-$(CONFIG_APP)                     += -I../$(APP_DIR)/source
 INCLUDE_DIRS-$(CONFIG_QUICKSTART)              += -I../$(QUICKSTART_DIR)/include
 INCLUDE_DIRS-$(CONFIG_QUICKSTART)              += -I../$(QUICKSTART_DIR)/include/generated
+INCLUDE_DIRS-$(CONFIG_QUICKSTART)              += -I../$(QUICKSTART_DIR)/source
+INCLUDE_DIRS-y                                 += -I.
 INCLUDE_DIRS-y                                 += -I$(RTOS_SOURCE_DIR)/include
 INCLUDE_DIRS-$(CONFIG_FREERTOS_PORT_ARM_CM3)   += -I$(RTOS_SOURCE_DIR)/portable/GCC/ARM_CM3
 INCLUDE_DIRS-$(CONFIG_FREERTOS_PORT_ARM_CM4F)  += -I$(RTOS_SOURCE_DIR)/portable/GCC/ARM_CM4F

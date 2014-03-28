@@ -99,6 +99,9 @@ void CyaSSL_Debugging_OFF(void)
     int dc_log_printf(char*, ...);
 #endif
 
+
+#ifndef CONFIG_APP
+
 static void cyassl_log(const int logLevel, const char *const logMessage)
 {
     if (log_function)
@@ -158,5 +161,6 @@ void CYASSL_ERROR(int error)
         cyassl_log(ERROR_LOG , buffer);
     }
 }
+#endif
 
 #endif  /* DEBUG_CYASSL */ 

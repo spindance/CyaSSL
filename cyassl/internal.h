@@ -552,13 +552,26 @@ enum Misc {
     ENCRYPT_LEN     = 512,      /* allow 4096 bit static buffer */
     SIZEOF_SENDER   =  4,       /* clnt or srvr           */
     FINISHED_SZ     = 36,       /* MD5_DIGEST_SIZE + SHA_DIGEST_SIZE */
+#if defined CYASSL_SET_MAX_RECORD_SIZE
+    MAX_RECORD_SIZE = CYASSL_SET_MAX_RECORD_SIZE,
+#else
     MAX_RECORD_SIZE = 16384,    /* 2^14, max size by standard */
+#endif
     MAX_MSG_EXTRA   = 38 + MAX_DIGEST_SIZE,
                                 /* max added to msg, mac + pad  from */
                                 /* RECORD_HEADER_SZ + BLOCK_SZ (pad) + Max
                                    digest sz + BLOC_SZ (iv) + pad byte (1) */
+#if defined CYASSL_SET_MAX_COMP_EXTRA
+    MAX_COMP_EXTRA  = CYASSL_SET_MAX_COMP_EXTRA,     /* max compression extra */
+#else
     MAX_COMP_EXTRA  = 1024,     /* max compression extra */
+#endif
+
+#if defined CYASSL_SET_MAX_MTU
+    MAX_MTU         = CYASSL_SET_MAX_MTU,     /* max expected MTU */
+#else
     MAX_MTU         = 1500,     /* max expected MTU */
+#endif
     MAX_UDP_SIZE    = 8192 - 100, /* was MAX_MTU - 100 */
     MAX_DH_SZ       = 612,      /* 2240 p, pub, g + 2 byte size for each */
     MAX_STR_VERSION = 8,        /* string rep of protocol version */
