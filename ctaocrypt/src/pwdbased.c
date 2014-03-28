@@ -106,11 +106,7 @@ int PBKDF2(byte* output, const byte* passwd, int pLen, const byte* salt,
     int    hLen;
     int    j;
     Hmac   hmac;
-#ifdef CYASSL_SHA512
-    byte   buffer[SHA512_DIGEST_SIZE];
-#else
-    byte   buffer[INNER_HASH_SIZE];  /* max size, doesn't handle 512 yet */
-#endif
+    byte   buffer[MAX_DIGEST_SIZE];
 
     if (hashType == MD5) {
         hLen = MD5_DIGEST_SIZE;
@@ -329,15 +325,15 @@ int PKCS12_PBKDF(byte* output, const byte* passwd, int passLen,const byte* salt,
                 if (outSz > (int)v) {
                     /* take off MSB */
                     byte  tmp[129];
-                    mp_to_unsigned_bin(&res, tmp);
+                    ret = mp_to_unsigned_bin(&res, tmp);
                     XMEMCPY(I + i, tmp + 1, v);
                 }
                 else if (outSz < (int)v) {
                     XMEMSET(I + i, 0, v - outSz);
-                    mp_to_unsigned_bin(&res, I + i + v - outSz);
+                    ret = mp_to_unsigned_bin(&res, I + i + v - outSz);
                 }
                 else
-                    mp_to_unsigned_bin(&res, I + i);
+                    ret = mp_to_unsigned_bin(&res, I + i);
             }
 
             mp_clear(&i1);

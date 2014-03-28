@@ -92,6 +92,9 @@ typedef struct Aes {
     word32  magic;           /* using cavium magic */
     word64  contextHandle;   /* nitrox context memory handle */
 #endif
+#ifdef CYASSL_AES_COUNTER
+    word32  left;            /* unsued bytes left from last call */
+#endif 
 } Aes;
 
 
@@ -115,6 +118,14 @@ CYASSL_API int  AesGcmDecrypt(Aes* aes, byte* out, const byte* in, word32 sz,
                               const byte* iv, word32 ivSz,
                               const byte* authTag, word32 authTagSz,
                               const byte* authIn, word32 authInSz);
+
+typedef struct Gmac {
+    Aes aes;
+} Gmac;
+CYASSL_API void GmacSetKey(Gmac* gmac, const byte* key, word32 len);
+CYASSL_API void GmacUpdate(Gmac* gmac, const byte* iv, word32 ivSz,
+                              const byte* authIn, word32 authInSz,
+                              byte* authTag, word32 authTagSz);
 #endif /* HAVE_AESGCM */
 #ifdef HAVE_AESCCM
 CYASSL_API void AesCcmSetKey(Aes* aes, const byte* key, word32 keySz);

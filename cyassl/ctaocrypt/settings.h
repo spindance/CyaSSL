@@ -29,7 +29,7 @@
 #ifdef __cplusplus
     extern "C" {
 #endif
-#error TBDRMS Temporary Error to confirm we are not building this file.
+
 /* Uncomment next line if using IPHONE */
 /* #define IPHONE */
 
@@ -52,7 +52,7 @@
 /* #define MICROCHIP_TCPIP */
 
 /* Uncomment next line if using FreeRTOS */
-#define FREERTOS
+/* #define FREERTOS */
 
 /* Uncomment next line if using FreeRTOS Windows Simulator */
 /* #define FREERTOS_WINSIM */
@@ -61,7 +61,7 @@
 /* #define EBSNET */
 
 /* Uncomment next line if using lwip */
-#define CYASSL_LWIP
+/* #define CYASSL_LWIP */
 
 /* Uncomment next line if building CyaSSL for a game console */
 /* #define CYASSL_GAME_BUILD */
@@ -73,10 +73,13 @@
 /* #define FREESCALE_MQX */
 
 /* Uncomment next line if using STM32F2 */
-#define CYASSL_STM32F2
+/* #define CYASSL_STM32F2 */
 
 /* Uncomment next line if using Comverge settings */
 /* #define COMVERGE */
+
+/* Uncomment next line if using QL SEP settings */
+/* #define CYASSL_QL */
 
 
 #include <cyassl/ctaocrypt/visibility.h>
@@ -130,7 +133,11 @@
 #ifdef MICROCHIP_TCPIP
     /* include timer, NTP functions */
     #include "system/system_services.h"
-    #include "tcpip/sntp.h"
+    #ifdef MICROCHIP_MPLAB_HARMONY
+        #include "tcpip/tcpip.h"
+    #else
+        #include "tcpip/sntp.h"
+    #endif
 #endif
 
 #ifdef MBED
@@ -144,8 +151,38 @@
     #define NO_HC128
 #endif /* MBED */
 
+#ifdef CYASSL_TYTO
+    #include "rand.h"
+    #define FREERTOS
+    #define NO_FILESYSTEM
+    #define CYASSL_USER_IO
+    #define NO_DEV_RANDOM
+    #define HAVE_ECC
+    #define HAVE_ECC_ENCRYPT
+    #define ECC_SHAMIR
+    #define HAVE_HKDF
+    #define USE_FAST_MATH
+    #define TFM_TIMING_RESISTANT
+    #define FP_MAX_BITS 512
+    #define NO_OLD_TLS
+    #define NO_MD4
+    #define NO_RABBIT
+    #define NO_HC128
+    #define NO_RSA
+    #define NO_DSA
+    #define NO_PWDBASED
+    #define NO_PSK
+#endif
+
 #ifdef FREERTOS_WINSIM
     #define FREERTOS
+    #define USE_WINDOWS_API
+#endif
+
+
+/* Micrium will use Visual Studio for compilation but not the Win32 API */
+#if defined(_WIN32) && !defined(MICRIUM) && !defined(FREERTOS) \
+        && !defined(EBSNET)
     #define USE_WINDOWS_API
 #endif
 
@@ -184,9 +221,7 @@
         #define NO_HC128
     #endif
 
-    #ifdef SINGLE_THREADED
-        #error
-    #else
+    #ifndef SINGLE_THREADED
         #include "FreeRTOS.h"
         #include "semphr.h"
     #endif
@@ -287,6 +322,8 @@
     #define USE_FAST_MATH
     #define TFM_TIMING_RESISTANT
     #define FREESCALE_K70_RNGA
+    /* #define FREESCALE_K53_RNGB */
+    #include "mqx.h"
     #ifndef NO_FILESYSTEM
         #include "mfs.h"
         #include "fio.h"
@@ -295,21 +332,19 @@
         #include "mutex.h"
     #endif
 
-    #define XMALLOC(s, h, type) (void *)_mem_alloc_system((s))
-    #define XFREE(p, h, type)   _mem_free(p)
+    #define XMALLOC(s, h, t)    (void *)_mem_alloc_system((s))
+    #define XFREE(p, h, t)      {void* xp = (p); if ((xp)) _mem_free((xp));}
     /* Note: MQX has no realloc, using fastmath above */
 #endif
 
 #ifdef CYASSL_STM32F2
-    #define SIZEOF_LONG 4
     #define SIZEOF_LONG_LONG 8
-    #define LITTLE_ENDIAN_ORDER
     #define NO_DEV_RANDOM
     #define NO_CYASSL_DIR
     #define NO_RABBIT
     #define STM32F2_RNG
-    #undef STM32F2_CRYPTO
-    #define NO_FILESYSTEM
+    #define STM32F2_CRYPTO
+    #define KEIL_INTRINSICS
 #endif
 
 #ifdef MICRIUM
@@ -508,6 +543,37 @@
 #endif /* MICRIUM */
 
 
+#ifdef CYASSL_QL
+    #ifndef CYASSL_SEP
+        #define CYASSL_SEP
+    #endif
+    #ifndef OPENSSL_EXTRA
+        #define OPENSSL_EXTRA
+    #endif
+    #ifndef SESSION_CERTS
+        #define SESSION_CERTS
+    #endif
+    #ifndef HAVE_AESCCM
+        #define HAVE_AESCCM
+    #endif
+    #ifndef ATOMIC_USER
+        #define ATOMIC_USER
+    #endif
+    #ifndef CYASSL_DER_LOAD
+        #define CYASSL_DER_LOAD
+    #endif
+    #ifndef KEEP_PEER_CERT
+        #define KEEP_PEER_CERT
+    #endif
+    #ifndef HAVE_ECC
+        #define HAVE_ECC
+    #endif
+    #ifndef SESSION_INDEX
+        #define SESSION_INDEX
+    #endif
+#endif /* CYASSL_QL */
+
+
 #if !defined(XMALLOC_USER) && !defined(MICRIUM_MALLOC) && \
     !defined(CYASSL_LEANPSK) && !defined(NO_CYASSL_MEMORY)
     #define USE_CYASSL_MEMORY
@@ -550,28 +616,6 @@
 #endif
 
 /* Place any other flags or defines here */
-#ifdef BIG_ENDIAN_ORDER
-#error "AL2 Bridge is not BIG_ENDIAN"
-#endif
-#ifndef LITTLE_ENDIAN_ORDER
-#error "AL2 Bridge is Little Endian"
-#endif
-
-#if (SIZEOF_LONG_LONG == 8)
-// OK
-#else
-#error Size of long long should be 8.
-#endif 
-
-#if (SIZEOF_LONG == 4)
-// OK
-#else
-#error Size of long should be 4.
-#endif 
-
-#ifdef  STM32F2_CRYPTO
-#error  We DO NOT want STM32F2_CRYPTO defined.
-#endif
 
 
 #ifdef __cplusplus

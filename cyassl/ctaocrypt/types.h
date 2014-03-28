@@ -24,6 +24,7 @@
 #define CTAO_CRYPT_TYPES_H
 
 #include <cyassl/ctaocrypt/settings.h>
+#include <cyassl/ctaocrypt/port.h>
 
 #ifdef __cplusplus
     extern "C" {
@@ -138,6 +139,18 @@ enum {
 #endif
 
 
+/* set up thread local storage if available */
+#ifdef HAVE_THREAD_LS
+    #if defined(_MSC_VER)
+        #define THREAD_LS_T __declspec(thread)
+    #else
+        #define THREAD_LS_T __thread
+    #endif
+#else
+    #define THREAD_LS_T
+#endif
+
+
 /* Micrium will use Visual Studio for compilation but not the Win32 API */
 #if defined(_WIN32) && !defined(MICRIUM) && !defined(FREERTOS) \
         && !defined(EBSNET)
@@ -188,15 +201,28 @@ enum {
     #define XSTRNSTR(s1,s2,n) mystrnstr((s1),(s2),(n))
     #define XSTRNCMP(s1,s2,n) strncmp((s1),(s2),(n))
     #define XSTRNCAT(s1,s2,n) strncat((s1),(s2),(n))
-    #define XSTRNCASECMP(s1,s2,n) strncasecmp((s1),(s2),(n))
+    #ifndef USE_WINDOWS_API
+        #define XSTRNCASECMP(s1,s2,n) strncasecmp((s1),(s2),(n))
+        #define XSNPRINTF snprintf
+    #else
+        #define XSTRNCASECMP(s1,s2,n) _strnicmp((s1),(s2),(n))
+        #define XSNPRINTF _snprintf
+    #endif
 #endif
 
-#if defined(HAVE_ECC) || defined(HAVE_OCSP)
-    #ifndef CTYPE_USER
-        #include <ctype.h>
+#ifndef CTYPE_USER
+    #include <ctype.h>
+    #if defined(HAVE_ECC) || defined(HAVE_OCSP)
         #define XTOUPPER(c)     toupper((c))
         #define XISALPHA(c)     isalpha((c))
     #endif
+    /* needed by CyaSSL_check_domain_name() */
+    #ifdef __CYGWIN__
+        /* Cygwin uses a macro version of tolower() by default, use the
+         * function version. */
+        #undef tolower
+    #endif
+    #define XTOLOWER(c)      tolower((c))
 #endif
 
 
@@ -244,7 +270,8 @@ enum {
     DYNAMIC_TYPE_CAVIUM_TMP   = 40,
     DYNAMIC_TYPE_CAVIUM_RSA   = 41,
     DYNAMIC_TYPE_X509         = 42,
-    DYNAMIC_TYPE_TLSX         = 43
+    DYNAMIC_TYPE_TLSX         = 43,
+    DYNAMIC_TYPE_OCSP         = 44
 };
 
 /* max error buffer string size */
@@ -290,12 +317,6 @@ CYASSL_API word32 CheckRunTimeSettings(void);
    return 1 if a match otherwise 0 */
 #define CheckCtcSettings() (CTC_SETTINGS == CheckRunTimeSettings())
 
-#ifdef BIG_ENDIAN_ORDER
-#error "AL2 Bridge is Not Big Endian"
-#endif
-#ifndef LITTLE_ENDIAN_ORDER
-#error "AL2 Bridge is Little Endian"
-#endif
 
 #ifdef __cplusplus
     }   /* extern "C" */

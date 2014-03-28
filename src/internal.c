@@ -87,6 +87,13 @@ CYASSL_CALLBACKS needs LARGE_STATIC_BUFFERS, please add LARGE_STATIC_BUFFERS
     #endif
 #endif
 
+
+#ifdef CYASSL_DTLS
+    static INLINE int DtlsCheckWindow(DtlsState* state);
+    static INLINE int DtlsUpdateWindow(DtlsState* state);
+#endif
+
+
 typedef enum {
     doProcessInit = 0,
 #ifndef NO_CYASSL_SERVER
@@ -98,7 +105,7 @@ typedef enum {
 } processReply;
 
 #ifndef NO_OLD_TLS
-static void Hmac(CYASSL* ssl, byte* digest, const byte* in, word32 sz,
+static void SSL_hmac(CYASSL* ssl, byte* digest, const byte* in, word32 sz,
                  int content, int verify);
 
 #endif
@@ -419,9 +426,6 @@ int InitSSL_Ctx(CYASSL_CTX* ctx, CYASSL_METHOD* method)
     ctx->sendVerify = 0;
     ctx->quietShutdown = 0;
     ctx->groupMessages = 0;
-#ifdef HAVE_OCSP
-    CyaSSL_OCSP_Init(&ctx->ocsp);
-#endif
 #ifdef HAVE_CAVIUM
     ctx->devId = NO_CAVIUM_DEVICE; 
 #endif
@@ -447,7 +451,7 @@ int InitSSL_Ctx(CYASSL_CTX* ctx, CYASSL_METHOD* method)
 
     if (InitMutex(&ctx->countMutex) < 0) {
         CYASSL_MSG("Mutex error on CTX init");
-        return BAD_MUTEX_ERROR;
+        return BAD_MUTEX_E;
     } 
 #ifndef NO_CERTS
     if (ctx->cm == NULL) {
@@ -471,9 +475,6 @@ void SSL_CtxResourceFree(CYASSL_CTX* ctx)
     XFREE(ctx->certificate.buffer, ctx->heap, DYNAMIC_TYPE_CERT);
     XFREE(ctx->certChain.buffer, ctx->heap, DYNAMIC_TYPE_CERT);
     CyaSSL_CertManagerFree(ctx->cm);
-#endif
-#ifdef HAVE_OCSP
-    CyaSSL_OCSP_Cleanup(&ctx->ocsp);
 #endif
 #ifdef HAVE_TLS_EXTENSIONS
     TLSX_FreeAll(ctx->extensions);
@@ -573,7 +574,7 @@ void FreeCiphers(CYASSL* ssl)
     XFREE(ssl->encrypt.aes, ssl->heap, DYNAMIC_TYPE_CIPHER);
     XFREE(ssl->decrypt.aes, ssl->heap, DYNAMIC_TYPE_CIPHER);
 #endif
-#ifdef BUILD_CAMELLIA
+#ifdef HAVE_CAMELLIA
     XFREE(ssl->encrypt.cam, ssl->heap, DYNAMIC_TYPE_CIPHER);
     XFREE(ssl->decrypt.cam, ssl->heap, DYNAMIC_TYPE_CIPHER);
 #endif
@@ -628,8 +629,10 @@ void InitSuites(Suites* suites, ProtocolVersion pv, byte haveRSA, byte havePSK,
     if (suites->setSuites)
         return;      /* trust user settings, don't override */
 
-    if (side == CYASSL_SERVER_END && haveStaticECC)
+    if (side == CYASSL_SERVER_END && haveStaticECC) {
         haveRSA = 0;   /* can't do RSA with ECDSA key */
+        (void)haveRSA; /* some builds won't read */
+    }
 
     if (side == CYASSL_SERVER_END && haveECDSAsig) {
         haveRSAsig = 0;     /* can't have RSA sig if signed by ECDSA */
@@ -640,6 +643,13 @@ void InitSuites(Suites* suites, ProtocolVersion pv, byte haveRSA, byte havePSK,
     if (pv.major == DTLS_MAJOR) {
         tls    = 1;
         tls1_2 = pv.minor <= DTLSv1_2_MINOR;
+    }
+#endif
+
+#ifdef HAVE_RENEGOTIATION_INDICATION
+    if (side == CYASSL_CLIENT_END) {
+        suites->suites[idx++] = 0;
+        suites->suites[idx++] = TLS_EMPTY_RENEGOTIATION_INFO_SCSV;
     }
 #endif
 
@@ -1091,24 +1101,45 @@ void InitSuites(Suites* suites, ProtocolVersion pv, byte haveRSA, byte havePSK,
     }
 #endif
 
-#ifdef BUILD_TLS_RSA_WITH_HC_128_CBC_MD5
+#ifdef BUILD_TLS_RSA_WITH_HC_128_MD5
     if (tls && haveRSA) {
         suites->suites[idx++] = 0; 
-        suites->suites[idx++] = TLS_RSA_WITH_HC_128_CBC_MD5;
+        suites->suites[idx++] = TLS_RSA_WITH_HC_128_MD5;
     }
 #endif
     
-#ifdef BUILD_TLS_RSA_WITH_HC_128_CBC_SHA
+#ifdef BUILD_TLS_RSA_WITH_HC_128_SHA
     if (tls && haveRSA) {
         suites->suites[idx++] = 0; 
-        suites->suites[idx++] = TLS_RSA_WITH_HC_128_CBC_SHA;
+        suites->suites[idx++] = TLS_RSA_WITH_HC_128_SHA;
     }
 #endif
 
-#ifdef BUILD_TLS_RSA_WITH_RABBIT_CBC_SHA
+#ifdef BUILD_TLS_RSA_WITH_HC_128_B2B256
     if (tls && haveRSA) {
         suites->suites[idx++] = 0; 
-        suites->suites[idx++] = TLS_RSA_WITH_RABBIT_CBC_SHA;
+        suites->suites[idx++] = TLS_RSA_WITH_HC_128_B2B256;
+    }
+#endif
+
+#ifdef BUILD_TLS_RSA_WITH_AES_128_CBC_B2B256
+    if (tls && haveRSA) {
+        suites->suites[idx++] = 0; 
+        suites->suites[idx++] = TLS_RSA_WITH_AES_128_CBC_B2B256;
+    }
+#endif
+
+#ifdef BUILD_TLS_RSA_WITH_AES_256_CBC_B2B256
+    if (tls && haveRSA) {
+        suites->suites[idx++] = 0; 
+        suites->suites[idx++] = TLS_RSA_WITH_AES_256_CBC_B2B256;
+    }
+#endif
+
+#ifdef BUILD_TLS_RSA_WITH_RABBIT_SHA
+    if (tls && haveRSA) {
+        suites->suites[idx++] = 0; 
+        suites->suites[idx++] = TLS_RSA_WITH_RABBIT_SHA;
     }
 #endif
 
@@ -1210,13 +1241,73 @@ void InitSuites(Suites* suites, ProtocolVersion pv, byte haveRSA, byte havePSK,
 
 #ifndef NO_CERTS
 
+
+void InitX509Name(CYASSL_X509_NAME* name, int dynamicFlag)
+{
+    (void)dynamicFlag;
+
+    if (name != NULL) {
+        name->name        = name->staticName;
+        name->dynamicName = 0;
+#ifdef OPENSSL_EXTRA
+        XMEMSET(&name->fullName, 0, sizeof(DecodedName));
+#endif /* OPENSSL_EXTRA */
+    }
+}
+
+
+void FreeX509Name(CYASSL_X509_NAME* name)
+{
+    if (name != NULL) {
+        if (name->dynamicName)
+            XFREE(name->name, NULL, DYNAMIC_TYPE_SUBJECT_CN);
+#ifdef OPENSSL_EXTRA
+        if (name->fullName.fullName != NULL)
+            XFREE(name->fullName.fullName, NULL, DYNAMIC_TYPE_X509);
+#endif /* OPENSSL_EXTRA */
+    }
+}
+
+
 /* Initialize CyaSSL X509 type */
 void InitX509(CYASSL_X509* x509, int dynamicFlag)
 {
+    InitX509Name(&x509->issuer, 0);
+    InitX509Name(&x509->subject, 0);
+    x509->version        = 0;
+    x509->pubKey.buffer  = NULL;
+    x509->sig.buffer     = NULL;
     x509->derCert.buffer = NULL;
     x509->altNames       = NULL;
     x509->altNamesNext   = NULL;
     x509->dynamicMemory  = (byte)dynamicFlag;
+    x509->isCa           = 0;
+#ifdef HAVE_ECC
+    x509->pkCurveOID = 0;
+#endif /* HAVE_ECC */
+#ifdef OPENSSL_EXTRA
+    x509->pathLength     = 0;
+    x509->basicConstSet  = 0;
+    x509->basicConstCrit = 0;
+    x509->basicConstPlSet = 0;
+    x509->subjAltNameSet = 0;
+    x509->subjAltNameCrit = 0;
+    x509->authKeyIdSet   = 0;
+    x509->authKeyIdCrit  = 0;
+    x509->authKeyId      = NULL;
+    x509->authKeyIdSz    = 0;
+    x509->subjKeyIdSet   = 0;
+    x509->subjKeyIdCrit  = 0;
+    x509->subjKeyId      = NULL;
+    x509->subjKeyIdSz    = 0;
+    x509->keyUsageSet    = 0;
+    x509->keyUsageCrit   = 0;
+    x509->keyUsage       = 0;
+    #ifdef CYASSL_SEP
+        x509->certPolicySet  = 0;
+        x509->certPolicyCrit = 0;
+    #endif /* CYASSL_SEP */
+#endif /* OPENSSL_EXTRA */
 }
 
 
@@ -1226,7 +1317,16 @@ void FreeX509(CYASSL_X509* x509)
     if (x509 == NULL)
         return;
 
-    XFREE(x509->derCert.buffer, NULL, DYNAMIC_TYPE_CERT);
+    FreeX509Name(&x509->issuer);
+    FreeX509Name(&x509->subject);
+    if (x509->pubKey.buffer)
+        XFREE(x509->pubKey.buffer, NULL, DYNAMIC_TYPE_PUBLIC_KEY);
+    XFREE(x509->derCert.buffer, NULL, DYNAMIC_TYPE_SUBJECT_CN);
+    XFREE(x509->sig.buffer, NULL, 0);
+    #ifdef OPENSSL_EXTRA
+        XFREE(x509->authKeyId, NULL, 0);
+        XFREE(x509->subjKeyId, NULL, 0);
+    #endif /* OPENSSL_EXTRA */
     if (x509->altNames)
         FreeAltNames(x509->altNames, NULL);
     if (x509->dynamicMemory)
@@ -1300,6 +1400,7 @@ int InitSSL(CYASSL* ssl, CYASSL_CTX* ctx)
 
 #ifdef HAVE_ECC
     ssl->eccTempKeySz = ctx->eccTempKeySz;
+    ssl->pkCurveOID = ctx->pkCurveOID;
     ssl->peerEccKeyPresent = 0;
     ssl->peerEccDsaKeyPresent = 0;
     ssl->eccDsaKeyPresent = 0;
@@ -1331,6 +1432,9 @@ int InitSSL(CYASSL* ssl, CYASSL_CTX* ctx)
 #ifdef CYASSL_DTLS
     ssl->IOCB_CookieCtx = NULL;      /* we don't use for default cb */
     ssl->dtls_expected_rx = MAX_MTU;
+    ssl->keys.dtls_state.window = 0;
+    ssl->keys.dtls_state.nextEpoch = 0;
+    ssl->keys.dtls_state.nextSeq = 0;
 #endif
 
 #ifndef NO_OLD_TLS
@@ -1388,13 +1492,13 @@ int InitSSL(CYASSL* ssl, CYASSL_CTX* ctx)
 
 #ifdef CYASSL_DTLS
     ssl->keys.dtls_sequence_number      = 0;
-    ssl->keys.dtls_peer_sequence_number = 0;
-    ssl->keys.dtls_expected_peer_sequence_number = 0;
+    ssl->keys.dtls_state.curSeq         = 0;
+    ssl->keys.dtls_state.nextSeq        = 0;
     ssl->keys.dtls_handshake_number     = 0;
     ssl->keys.dtls_expected_peer_handshake_number = 0;
     ssl->keys.dtls_epoch                = 0;
-    ssl->keys.dtls_peer_epoch           = 0;
-    ssl->keys.dtls_expected_peer_epoch  = 0;
+    ssl->keys.dtls_state.curEpoch       = 0;
+    ssl->keys.dtls_state.nextEpoch      = 0;
     ssl->dtls_timeout_init              = DTLS_TIMEOUT_INIT;
     ssl->dtls_timeout_max               = DTLS_TIMEOUT_MAX;
     ssl->dtls_timeout                   = ssl->dtls_timeout_init;
@@ -1416,7 +1520,7 @@ int InitSSL(CYASSL* ssl, CYASSL_CTX* ctx)
     ssl->options.resuming = 0;
     ssl->options.haveSessionId = 0;
     #ifndef NO_OLD_TLS
-        ssl->hmac = Hmac;         /* default to SSLv3 */
+        ssl->hmac = SSL_hmac; /* default to SSLv3 */
     #else
         ssl->hmac = TLS_hmac;
     #endif
@@ -1524,7 +1628,7 @@ int InitSSL(CYASSL* ssl, CYASSL_CTX* ctx)
     /* increment CTX reference count */
     if (LockMutex(&ctx->countMutex) != 0) {
         CYASSL_MSG("Couldn't lock CTX count mutex");
-        return BAD_MUTEX_ERROR;
+        return BAD_MUTEX_E;
     }
     ctx->refCount++;
     UnLockMutex(&ctx->countMutex);
@@ -1536,6 +1640,7 @@ int InitSSL(CYASSL* ssl, CYASSL_CTX* ctx)
         CYASSL_MSG("Arrays Memory error");
         return MEMORY_E;
     }
+    XMEMSET(ssl->arrays, 0, sizeof(Arrays));
 
 #ifndef NO_PSK
     ssl->arrays->client_identity[0] = 0;
@@ -2073,8 +2178,10 @@ DtlsMsg* DtlsMsgStore(DtlsMsg* head, word32 seq, const byte* data,
         DtlsMsg* cur = DtlsMsgFind(head, seq);
         if (cur == NULL) {
             cur = DtlsMsgNew(dataSz, heap);
-            DtlsMsgSet(cur, seq, data, type, fragOffset, fragSz);
-            head = DtlsMsgInsert(head, cur);
+            if (cur != NULL) {
+                DtlsMsgSet(cur, seq, data, type, fragOffset, fragSz);
+                head = DtlsMsgInsert(head, cur);
+            }
         }
         else {
             DtlsMsgSet(cur, seq, data, type, fragOffset, fragSz);
@@ -2214,6 +2321,17 @@ ProtocolVersion MakeDTLSv1_2(void)
     word32 LowResTimer(void)
     {
         return (word32) SYS_TICK_Get();
+    }
+
+#elif defined(FREESCALE_MQX)
+
+    word32 LowResTimer(void)
+    {
+        TIME_STRUCT mqxTime;
+
+        _time_get_elapsed(&mqxTime);
+
+        return (word32) mqxTime.SECONDS;
     }
 
 
@@ -2386,7 +2504,6 @@ static int Receive(CYASSL* ssl, byte* buf, word32 sz)
 retry:
     recvd = ssl->ctx->CBIORecv(ssl, (char *)buf, (int)sz, ssl->IOCB_ReadCtx);
     if (recvd < 0)
-        logError("ssl->ctx->CBIORecv returned %d", recvd);
         switch (recvd) {
             case CYASSL_CBIO_ERR_GENERAL:        /* general/unknown error */
                 return -1;
@@ -2525,11 +2642,9 @@ int SendBuffered(CYASSL* ssl)
                     break;
 
                 default:
-                    CYASSL_ERROR(SOCKET_ERROR_E);
                     return SOCKET_ERROR_E;
             }
 
-            CYASSL_ERROR(SOCKET_ERROR_E);
             return SOCKET_ERROR_E;
         }
 
@@ -2662,9 +2777,9 @@ static int GetRecordHeader(CYASSL* ssl, const byte* input, word32* inOutIdx,
         /* type and version in same sport */
         XMEMCPY(rh, input + *inOutIdx, ENUM_LEN + VERSION_SZ);
         *inOutIdx += ENUM_LEN + VERSION_SZ;
-        ato16(input + *inOutIdx, &ssl->keys.dtls_peer_epoch);
+        ato16(input + *inOutIdx, &ssl->keys.dtls_state.curEpoch);
         *inOutIdx += 4; /* advance past epoch, skip first 2 seq bytes for now */
-        ato32(input + *inOutIdx, &ssl->keys.dtls_peer_sequence_number);
+        ato32(input + *inOutIdx, &ssl->keys.dtls_state.curSeq);
         *inOutIdx += 4;  /* advance past rest of seq */
         ato16(input + *inOutIdx, size);
         *inOutIdx += LENGTH_SZ;
@@ -2685,27 +2800,14 @@ static int GetRecordHeader(CYASSL* ssl, const byte* input, word32* inOutIdx,
             return VERSION_ERROR;              /* only use requested version */
         }
     }
-#if 0
-    /* Instead of this, check the datagram against the sliding window of
-     * received datagram goodness. */
+
 #ifdef CYASSL_DTLS
-    /* If DTLS, check the sequence number against expected. If out of
-     * order, drop the record. Allows newer records in and resets the
-     * expected to the next record. */
     if (ssl->options.dtls) {
-        if ((ssl->keys.dtls_expected_peer_epoch ==
-                                        ssl->keys.dtls_peer_epoch) &&
-                (ssl->keys.dtls_peer_sequence_number >=
-                                ssl->keys.dtls_expected_peer_sequence_number)) {
-            ssl->keys.dtls_expected_peer_sequence_number =
-                            ssl->keys.dtls_peer_sequence_number + 1;
-        }
-        else {
+        if (DtlsCheckWindow(&ssl->keys.dtls_state) != 1)
             return SEQUENCE_ERROR;
-        }
     }
 #endif
-#endif
+
     /* record layer length check */
 #ifdef HAVE_MAX_FRAGMENT
     if (*size > (ssl->max_fragment + MAX_COMP_EXTRA + MAX_MSG_EXTRA))
@@ -2899,15 +3001,15 @@ static int MatchDomainName(const char* pattern, int len, const char* str)
     if (pattern == NULL || str == NULL || len <= 0)
         return 0;
 
-    while (len > 0 && (p = (char)(*pattern++))) {
+    while (len > 0 && (p = (char)XTOLOWER(*pattern++))) {
         if (p == '*') {
-            while (--len > 0 && (p = (char)(*pattern++)) == '*')
+            while (--len > 0 && (p = (char)XTOLOWER(*pattern++)) == '*')
                 ;
 
             if (len == 0)
                 p = '\0';
 
-            while ( (s = (char)(*str)) != '\0') {
+            while ( (s = (char)XTOLOWER(*str)) != '\0') {
                 if (s == p)
                     break;
                 if (s == '.')
@@ -2916,7 +3018,7 @@ static int MatchDomainName(const char* pattern, int len, const char* str)
             }
         }
         else {
-            if (p != (char)(*str))
+            if (p != (char)XTOLOWER(*str))
                 return 0;
         }
 
@@ -2967,13 +3069,37 @@ int CopyDecodedToX509(CYASSL_X509* x509, DecodedCert* dCert)
     if (x509 == NULL || dCert == NULL)
         return BAD_FUNC_ARG;
 
+    x509->version = dCert->version + 1;
+
     XSTRNCPY(x509->issuer.name, dCert->issuer, ASN_NAME_MAX);
     x509->issuer.name[ASN_NAME_MAX - 1] = '\0';
     x509->issuer.sz = (int)XSTRLEN(x509->issuer.name) + 1;
+#ifdef OPENSSL_EXTRA
+    if (dCert->issuerName.fullName != NULL) {
+        XMEMCPY(&x509->issuer.fullName,
+                                       &dCert->issuerName, sizeof(DecodedName));
+        x509->issuer.fullName.fullName = (char*)XMALLOC(
+                        dCert->issuerName.fullNameLen, NULL, DYNAMIC_TYPE_X509);
+        if (x509->issuer.fullName.fullName != NULL)
+            XMEMCPY(x509->issuer.fullName.fullName,
+                     dCert->issuerName.fullName, dCert->issuerName.fullNameLen);
+    }
+#endif /* OPENSSL_EXTRA */
 
     XSTRNCPY(x509->subject.name, dCert->subject, ASN_NAME_MAX);
     x509->subject.name[ASN_NAME_MAX - 1] = '\0';
     x509->subject.sz = (int)XSTRLEN(x509->subject.name) + 1;
+#ifdef OPENSSL_EXTRA
+    if (dCert->subjectName.fullName != NULL) {
+        XMEMCPY(&x509->subject.fullName,
+                                      &dCert->subjectName, sizeof(DecodedName));
+        x509->subject.fullName.fullName = (char*)XMALLOC(
+                       dCert->subjectName.fullNameLen, NULL, DYNAMIC_TYPE_X509);
+        if (x509->subject.fullName.fullName != NULL)
+            XMEMCPY(x509->subject.fullName.fullName,
+                   dCert->subjectName.fullName, dCert->subjectName.fullNameLen);
+    }
+#endif /* OPENSSL_EXTRA */
 
     XMEMCPY(x509->serial, dCert->serial, EXTERNAL_SERIAL_SIZE);
     x509->serialSz = dCert->serialSz;
@@ -3009,6 +3135,44 @@ int CopyDecodedToX509(CYASSL_X509* x509, DecodedCert* dCert)
             x509->hwSerialNumSz = 0;
     }
 #endif /* CYASSL_SEP */
+    {
+        int minSz = min(dCert->beforeDateLen, MAX_DATE_SZ);
+        if (minSz != 0) {
+            x509->notBeforeSz = minSz;
+            XMEMCPY(x509->notBefore, dCert->beforeDate, minSz);
+        }
+        else
+            x509->notBeforeSz = 0;
+        minSz = min(dCert->afterDateLen, MAX_DATE_SZ);
+        if (minSz != 0) {
+            x509->notAfterSz = minSz;
+            XMEMCPY(x509->notAfter, dCert->afterDate, minSz);
+        }
+        else
+            x509->notAfterSz = 0;
+    }
+
+    if (dCert->publicKey != NULL && dCert->pubKeySize != 0) {
+        x509->pubKey.buffer = (byte*)XMALLOC(
+                              dCert->pubKeySize, NULL, DYNAMIC_TYPE_PUBLIC_KEY);
+        if (x509->pubKey.buffer != NULL) {
+            x509->pubKeyOID = dCert->keyOID;
+            x509->pubKey.length = dCert->pubKeySize;
+            XMEMCPY(x509->pubKey.buffer, dCert->publicKey, dCert->pubKeySize);
+        }
+        else
+            ret = MEMORY_E;
+    }
+
+    x509->sig.buffer = (byte*)XMALLOC(dCert->sigLength, NULL, 0);
+    if (x509->sig.buffer == NULL) {
+        ret = MEMORY_E;
+    }
+    else {
+        XMEMCPY(x509->sig.buffer, dCert->signature, dCert->sigLength);
+        x509->sig.length = dCert->sigLength;
+        x509->sigOID = dCert->signatureOID;
+    }
 
     /* store cert for potential retrieval */
     x509->derCert.buffer = (byte*)XMALLOC(dCert->maxIdx, NULL,
@@ -3024,6 +3188,51 @@ int CopyDecodedToX509(CYASSL_X509* x509, DecodedCert* dCert)
     x509->altNames     = dCert->altNames;
     dCert->altNames    = NULL;     /* takes ownership */
     x509->altNamesNext = x509->altNames;  /* index hint */
+
+    x509->isCa = dCert->isCA;
+#ifdef OPENSSL_EXTRA
+    x509->pathLength = dCert->pathLength;
+    x509->keyUsage = dCert->extKeyUsage;
+
+    x509->basicConstSet = dCert->extBasicConstSet;
+    x509->basicConstCrit = dCert->extBasicConstCrit;
+    x509->basicConstPlSet = dCert->extBasicConstPlSet;
+    x509->subjAltNameSet = dCert->extSubjAltNameSet;
+    x509->subjAltNameCrit = dCert->extSubjAltNameCrit;
+    x509->authKeyIdSet = dCert->extAuthKeyIdSet;
+    x509->authKeyIdCrit = dCert->extAuthKeyIdCrit;
+    if (dCert->extAuthKeyIdSrc != NULL && dCert->extAuthKeyIdSz != 0) {
+        x509->authKeyId = (byte*)XMALLOC(dCert->extAuthKeyIdSz, NULL, 0);
+        if (x509->authKeyId != NULL) {
+            XMEMCPY(x509->authKeyId,
+                                 dCert->extAuthKeyIdSrc, dCert->extAuthKeyIdSz);
+            x509->authKeyIdSz = dCert->extAuthKeyIdSz;
+        }
+        else
+            ret = MEMORY_E;
+    }
+    x509->subjKeyIdSet = dCert->extSubjKeyIdSet;
+    x509->subjKeyIdCrit = dCert->extSubjKeyIdCrit;
+    if (dCert->extSubjKeyIdSrc != NULL && dCert->extSubjKeyIdSz != 0) {
+        x509->subjKeyId = (byte*)XMALLOC(dCert->extSubjKeyIdSz, NULL, 0);
+        if (x509->subjKeyId != NULL) {
+            XMEMCPY(x509->subjKeyId,
+                                 dCert->extSubjKeyIdSrc, dCert->extSubjKeyIdSz);
+            x509->subjKeyIdSz = dCert->extSubjKeyIdSz;
+        }
+        else
+            ret = MEMORY_E;
+    }
+    x509->keyUsageSet = dCert->extKeyUsageSet;
+    x509->keyUsageCrit = dCert->extKeyUsageCrit;
+    #ifdef CYASSL_SEP
+        x509->certPolicySet = dCert->extCertPolicySet;
+        x509->certPolicyCrit = dCert->extCertPolicyCrit;
+    #endif /* CYASSL_SEP */
+#endif /* OPENSSL_EXTRA */
+#ifdef HAVE_ECC
+    x509->pkCurveOID = dCert->pkCurveOID;
+#endif /* HAVE_ECC */
 
     return ret;
 }
@@ -3186,8 +3395,8 @@ static int DoCertificate(CYASSL* ssl, byte* input, word32* inOutIdx)
         }
 
 #ifdef HAVE_OCSP
-        if (fatal == 0) {
-            ret = CyaSSL_OCSP_Lookup_Cert(&ssl->ctx->ocsp, &dCert);
+        if (fatal == 0 && ssl->ctx->cm->ocspEnabled) {
+            ret = CheckCertOCSP(ssl->ctx->cm->ocsp, &dCert);
             if (ret != 0) {
                 CYASSL_MSG("\tOCSP Lookup not ok");
                 fatal = 0;
@@ -3200,7 +3409,7 @@ static int DoCertificate(CYASSL* ssl, byte* input, word32* inOutIdx)
             int doCrlLookup = 1;
 
             #ifdef HAVE_OCSP
-            if (ssl->ctx->ocsp.enabled) {
+            if (ssl->ctx->cm->ocspEnabled) {
                 doCrlLookup = (ret == OCSP_CERT_UNKNOWN);
             }
             #endif /* HAVE_OCSP */
@@ -3381,7 +3590,7 @@ static int DoCertificate(CYASSL* ssl, byte* input, word32* inOutIdx)
         }
         ssl->error = ret;
     }
-#ifdef FORTRESS
+#ifdef CYASSL_ALWAYS_VERIFY_CB
     else {
         if (ssl->verifyCallback) {
             int ok;
@@ -3392,7 +3601,9 @@ static int DoCertificate(CYASSL* ssl, byte* input, word32* inOutIdx)
             store.discardSessionCerts = 0;
             store.domain = domain;
             store.userCtx = ssl->verifyCbCtx;
+#ifdef KEEP_PEER_CERT
             store.current_cert = &ssl->peerCert;
+#endif
             store.ex_data = ssl;
 
             ok = ssl->verifyCallback(1, &store);
@@ -3425,7 +3636,7 @@ static int DoHelloRequest(CYASSL* ssl, const byte* input, word32* inOutIdx)
         const byte* mac;
         int         padSz = ssl->keys.encryptSz - HANDSHAKE_HEADER_SZ - 
                             ssl->specs.hash_size;
-        byte        verify[SHA256_DIGEST_SIZE];
+        byte        verify[MAX_DIGEST_SIZE];
        
         ssl->hmac(ssl, verify, input + *inOutIdx - HANDSHAKE_HEADER_SZ,
                   HANDSHAKE_HEADER_SZ, handshake, 1);
@@ -3659,11 +3870,72 @@ static int DoHandShakeMsg(CYASSL* ssl, byte* input, word32* inOutIdx,
 
 
 #ifdef CYASSL_DTLS
+
+static INLINE int DtlsCheckWindow(DtlsState* state)
+{
+    word32 cur;
+    word32 next;
+    DtlsSeq window;
+
+    if (state->curEpoch == state->nextEpoch) {
+        next = state->nextSeq;
+        window = state->window;
+    }
+    else if (state->curEpoch < state->nextEpoch) {
+        next = state->prevSeq;
+        window = state->prevWindow;
+    }
+    else {
+        return 0;
+    }
+
+    cur = state->curSeq;
+
+    if ((next > DTLS_SEQ_BITS) && (cur < next - DTLS_SEQ_BITS)) {
+        return 0;
+    }
+    else if ((cur < next) && (window & (1 << (next - cur - 1)))) {
+        return 0;
+    }
+
+    return 1;
+}
+
+
+static INLINE int DtlsUpdateWindow(DtlsState* state)
+{
+    word32 cur;
+    word32* next;
+    DtlsSeq* window;
+
+    if (state->curEpoch == state->nextEpoch) {
+        next = &state->nextSeq;
+        window = &state->window;
+    }
+    else {
+        next = &state->prevSeq;
+        window = &state->prevWindow;
+    }
+
+    cur = state->curSeq;
+
+    if (cur < *next) {
+        *window |= (1 << (*next - cur - 1));
+    }
+    else {
+        *window <<= (1 + cur - *next);
+        *window |= 1;
+        *next = cur + 1;
+    }
+
+    return 1;
+}
+
+
 static int DtlsMsgDrain(CYASSL* ssl)
 {
     DtlsMsg* item = ssl->dtls_msg_list;
     int ret = 0;
-    word32 idx = 0;
 
     /* While there is an item in the store list, and it is the expected
      * message, and it is complete, and there hasn't been an error in the
@@ -3672,6 +3944,7 @@ static int DtlsMsgDrain(CYASSL* ssl)
             ssl->keys.dtls_expected_peer_handshake_number == item->seq &&
             item->fragSz == item->sz &&
             ret == 0) {
+        word32 idx = 0;
         ssl->keys.dtls_expected_peer_handshake_number++;
         ret = DoHandShakeMsgType(ssl, item->msg,
                                  &idx, item->type, item->sz, item->sz);
@@ -3734,7 +4007,8 @@ static int DoDtlsHandShakeMsg(CYASSL* ssl, byte* input, word32* inOutIdx,
                         size, type, fragOffset, fragSz, ssl->heap);
         *inOutIdx += fragSz;
         ret = 0;
-        if (ssl->dtls_msg_list->fragSz >= ssl->dtls_msg_list->sz)
+        if (ssl->dtls_msg_list != NULL &&
+            ssl->dtls_msg_list->fragSz >= ssl->dtls_msg_list->sz)
             ret = DtlsMsgDrain(ssl);
     }
     else {
@@ -3798,7 +4072,6 @@ static INLINE int Encrypt(CYASSL* ssl, byte* out, const byte* input, word16 sz)
         #ifdef BUILD_AES
             case cyassl_aes:
                 return AesCbcEncrypt(ssl->encrypt.aes, out, input, sz);
-                break;
         #endif
 
         #ifdef BUILD_AESGCM
@@ -3894,7 +4167,6 @@ static INLINE int Encrypt(CYASSL* ssl, byte* out, const byte* input, word16 sz)
         #ifdef HAVE_HC128
             case cyassl_hc128:
                 return Hc128_Process(ssl->encrypt.hc128, out, input, sz);
-                break;
         #endif
 
         #ifdef BUILD_RABBIT
@@ -3949,7 +4221,6 @@ static INLINE int Decrypt(CYASSL* ssl, byte* plain, const byte* input,
         #ifdef BUILD_AES
             case cyassl_aes:
                 return AesCbcDecrypt(ssl->decrypt.aes, plain, input, sz);
-                break;
         #endif
 
         #ifdef BUILD_AESGCM
@@ -4033,7 +4304,6 @@ static INLINE int Decrypt(CYASSL* ssl, byte* plain, const byte* input,
         #ifdef HAVE_HC128
             case cyassl_hc128:
                 return Hc128_Process(ssl->decrypt.hc128, plain, input, sz);
-                break;
         #endif
 
         #ifdef BUILD_RABBIT
@@ -4061,22 +4331,26 @@ static INLINE int Decrypt(CYASSL* ssl, byte* plain, const byte* input,
 /* check cipher text size for sanity */
 static int SanityCheckCipherText(CYASSL* ssl, word32 encryptSz)
 {
-    word32 minLength = 0;
+#ifdef HAVE_TRUNCATED_HMAC
+    word32 minLength = ssl->truncated_hmac ? TRUNCATED_HMAC_SZ
+                                           : ssl->specs.hash_size;
+#else
+    word32 minLength = ssl->specs.hash_size; /* covers stream */
+#endif
 
     if (ssl->specs.cipher_type == block) {
         if (encryptSz % ssl->specs.block_size) {
             CYASSL_MSG("Block ciphertext not block size");
             return SANITY_CIPHER_E;
         }
-        minLength = ssl->specs.hash_size + 1;  /* pad byte */
+
+        minLength++;  /* pad byte */
+
         if (ssl->specs.block_size > minLength)
             minLength = ssl->specs.block_size;
 
         if (ssl->options.tls1_1)
             minLength += ssl->specs.block_size;  /* explicit IV */
-    }
-    else if (ssl->specs.cipher_type == stream) {
-        minLength = ssl->specs.hash_size;
     }
     else if (ssl->specs.cipher_type == aead) {
         minLength = ssl->specs.block_size; /* explicit IV + implicit IV + CTR */
@@ -4361,7 +4635,6 @@ int DoApplicationData(CYASSL* ssl, byte* input, word32* inOutIdx)
     int    ivExtra = 0;
     byte*  rawData = input + idx;  /* keep current  for hmac */
 #ifdef HAVE_LIBZ
-#error should not be used.
     byte   decomp[MAX_RECORD_SIZE + MAX_COMP_EXTRA];
 #endif
 
@@ -4497,10 +4770,8 @@ static int GetInputData(CYASSL *ssl, word32 size)
                      ssl->buffers.inputBuffer.buffer +
                      ssl->buffers.inputBuffer.length, 
                      inSz);
-        if (in == -1) {
-            logError("Receive returned %d",SOCKET_ERROR_E);
+        if (in == -1)
             return SOCKET_ERROR_E;
-        }
    
         if (in == WANT_READ)
             return WANT_READ;
@@ -4524,7 +4795,12 @@ static INLINE int VerifyMac(CYASSL* ssl, const byte* input, word32 msgSz,
     int    ret;
     word32 pad     = 0;
     word32 padByte = 0;
+#ifdef HAVE_TRUNCATED_HMAC
+    word32 digestSz = ssl->truncated_hmac ? TRUNCATED_HMAC_SZ
+                                          : ssl->specs.hash_size;
+#else
     word32 digestSz = ssl->specs.hash_size;
+#endif
     byte   verify[MAX_DIGEST_SIZE];
 
     if (ssl->specs.cipher_type == block) {
@@ -4600,20 +4876,16 @@ int ProcessReply(CYASSL* ssl)
 
             /* get header or return error */
             if (!ssl->options.dtls) {
-                if ((ret = GetInputData(ssl, readSz)) < 0) {
-                    CYASSL_ERROR(ret);
+                if ((ret = GetInputData(ssl, readSz)) < 0)
                     return ret;
-                }
             } else {
             #ifdef CYASSL_DTLS
                 /* read ahead may already have header */
                 used = ssl->buffers.inputBuffer.length -
                        ssl->buffers.inputBuffer.idx;
                 if (used < readSz)
-                    if ((ret = GetInputData(ssl, readSz)) < 0) {
-                        CYASSL_ERROR(ret);
+                    if ((ret = GetInputData(ssl, readSz)) < 0)
                         return ret;
-                    }
             #endif
             }
 
@@ -4643,20 +4915,16 @@ int ProcessReply(CYASSL* ssl)
 
             /* get sz bytes or return error */
             if (!ssl->options.dtls) {
-                if ((ret = GetInputData(ssl, ssl->curSize)) < 0) {
-                    CYASSL_ERROR(ret);
+                if ((ret = GetInputData(ssl, ssl->curSize)) < 0)
                     return ret;
-                }
             } else {
             #ifdef CYASSL_DTLS
                 /* read ahead may already have */
                 used = ssl->buffers.inputBuffer.length -
                        ssl->buffers.inputBuffer.idx;
                 if (used < ssl->curSize)
-                    if ((ret = GetInputData(ssl, ssl->curSize)) < 0) {
-                        CYASSL_ERROR(ret);
+                    if ((ret = GetInputData(ssl, ssl->curSize)) < 0)
                         return ret;
-                    }
             #endif  /* CYASSL_DTLS */
             }
 
@@ -4665,10 +4933,8 @@ int ProcessReply(CYASSL* ssl)
                                         ssl->buffers.inputBuffer.length -
                                         ssl->buffers.inputBuffer.idx,
                                         ssl->curSize);
-            if (ret < 0) {
-                CYASSL_ERROR(ret);
+            if (ret < 0)
                 return ret;
-            }
 
             else if (ssl->buffers.inputBuffer.idx ==
                      ssl->buffers.inputBuffer.length) {
@@ -4686,19 +4952,14 @@ int ProcessReply(CYASSL* ssl)
                                        &ssl->curRL, &ssl->curSize);
 #ifdef CYASSL_DTLS
             if (ssl->options.dtls && ret == SEQUENCE_ERROR) {
-                /* This message is out of order. If we are handshaking, save
-                 *it for later. Otherwise go ahead and process it. */
                 ssl->options.processReply = doProcessInit;
                 ssl->buffers.inputBuffer.length = 0;
                 ssl->buffers.inputBuffer.idx = 0;
                 continue;
             }
 #endif
-            if (ret != 0) {
-                if (ret<0)
-                    CYASSL_ERROR(ret);
+            if (ret != 0)
                 return ret;
-            }
 
             ssl->options.processReply = getData;
 
@@ -4707,20 +4968,16 @@ int ProcessReply(CYASSL* ssl)
 
             /* get sz bytes or return error */
             if (!ssl->options.dtls) {
-                if ((ret = GetInputData(ssl, ssl->curSize)) < 0) {
-                    CYASSL_ERROR(ret);
+                if ((ret = GetInputData(ssl, ssl->curSize)) < 0)
                     return ret;
-                }
             } else {
 #ifdef CYASSL_DTLS
                 /* read ahead may already have */
                 used = ssl->buffers.inputBuffer.length -
                        ssl->buffers.inputBuffer.idx;
                 if (used < ssl->curSize)
-                    if ((ret = GetInputData(ssl, ssl->curSize)) < 0) {
-                        CYASSL_ERROR(ret);
+                    if ((ret = GetInputData(ssl, ssl->curSize)) < 0)
                         return ret;
-                    }
 #endif
             }
             
@@ -4730,12 +4987,17 @@ int ProcessReply(CYASSL* ssl)
         /* the record layer is here */
         case runProcessingOneMessage:
 
-            if (ssl->keys.encryptionOn && ssl->keys.decryptedCur == 0) {
+            #ifdef CYASSL_DTLS
+            if (ssl->options.dtls &&
+                ssl->keys.dtls_state.curEpoch < ssl->keys.dtls_state.nextEpoch)
+                ssl->keys.decryptedCur = 1;
+            #endif
+
+            if (ssl->keys.encryptionOn && ssl->keys.decryptedCur == 0)
+            {
                 ret = SanityCheckCipherText(ssl, ssl->curSize);
-                if (ret < 0) {
-                    CYASSL_ERROR(ret);
+                if (ret < 0)
                     return ret;
-                }
 
                 if (atomicUser) {
                 #ifdef ATOMIC_USER
@@ -4782,6 +5044,12 @@ int ProcessReply(CYASSL* ssl)
                 ssl->keys.decryptedCur = 1;
             }
 
+            if (ssl->options.dtls) {
+            #ifdef CYASSL_DTLS
+                DtlsUpdateWindow(&ssl->keys.dtls_state);
+            #endif /* CYASSL_DTLS */
+            }
+
             CYASSL_MSG("received record layer msg");
 
             switch (ssl->curRL.type) {
@@ -4801,11 +5069,8 @@ int ProcessReply(CYASSL* ssl)
                                             ssl->buffers.inputBuffer.length);
 #endif
                     }
-                    if (ret != 0) {
-                        if (ret<0)
-                            CYASSL_ERROR(ret);
+                    if (ret != 0)
                         return ret;
-                    }
                     break;
 
                 case change_cipher_spec:
@@ -4844,18 +5109,15 @@ int ProcessReply(CYASSL* ssl)
                     #ifdef CYASSL_DTLS
                         if (ssl->options.dtls) {
                             DtlsPoolReset(ssl);
-                            ssl->keys.dtls_expected_peer_epoch++;
-                            ssl->keys.dtls_expected_peer_sequence_number = 0;
+                            ssl->keys.dtls_state.nextEpoch++;
+                            ssl->keys.dtls_state.nextSeq = 0;
                         }
                     #endif
 
                     #ifdef HAVE_LIBZ
                         if (ssl->options.usingCompression)
-                            if ( (ret = InitStreams(ssl)) != 0) {
-                                if (ret<0)
-                                    CYASSL_ERROR(ret);
+                            if ( (ret = InitStreams(ssl)) != 0)
                                 return ret;
-                            }
                     #endif
                     if (ssl->options.resuming && ssl->options.side ==
                                                               CYASSL_CLIENT_END)
@@ -4882,10 +5144,8 @@ int ProcessReply(CYASSL* ssl)
                            &ssl->buffers.inputBuffer.idx, &type);
                     if (ret == alert_fatal)
                         return FATAL_ERROR;
-                    else if (ret < 0) {
-                        CYASSL_ERROR(ret);
+                    else if (ret < 0)
                         return ret;
-                    }
 
                     /* catch warnings that are handled as errors */
                     if (type == close_notify)
@@ -4987,7 +5247,7 @@ int SendChangeCipher(CYASSL* ssl)
 
 
 #ifndef NO_OLD_TLS
-static void Hmac(CYASSL* ssl, byte* digest, const byte* in, word32 sz,
+static void SSL_hmac(CYASSL* ssl, byte* digest, const byte* in, word32 sz,
                  int content, int verify)
 {
     byte   result[MAX_DIGEST_SIZE];
@@ -5136,7 +5396,12 @@ static void BuildCertHashes(CYASSL* ssl, Hashes* hashes)
 static int BuildMessage(CYASSL* ssl, byte* output, const byte* input, int inSz,
                         int type)
 {
+#ifdef HAVE_TRUNCATED_HMAC
+    word32 digestSz = min(ssl->specs.hash_size,
+                ssl->truncated_hmac ? TRUNCATED_HMAC_SZ : ssl->specs.hash_size);
+#else
     word32 digestSz = ssl->specs.hash_size;
+#endif
     word32 sz = RECORD_HEADER_SZ + inSz + digestSz;                
     word32 pad  = 0, i;
     word32 idx  = RECORD_HEADER_SZ;
@@ -5212,8 +5477,19 @@ static int BuildMessage(CYASSL* ssl, byte* output, const byte* input, int inSz,
 #endif
     }
     else {  
-        if (ssl->specs.cipher_type != aead)
-            ssl->hmac(ssl, output+idx, output + headerSz + ivSz, inSz, type, 0);
+        if (ssl->specs.cipher_type != aead) {
+#ifdef HAVE_TRUNCATED_HMAC
+            if (ssl->truncated_hmac && ssl->specs.hash_size > digestSz) {
+                byte hmac[MAX_DIGEST_SIZE];
+
+                ssl->hmac(ssl, hmac, output + headerSz + ivSz, inSz, type, 0);
+
+                XMEMCPY(output + idx, hmac, digestSz);
+            } else
+#endif
+                ssl->hmac(ssl, output+idx, output + headerSz + ivSz, inSz,
+                                                                       type, 0);
+        }
 
         if ( (ret = Encrypt(ssl, output + headerSz, output+headerSz,size)) != 0)
             return ret;
@@ -5538,7 +5814,6 @@ int SendData(CYASSL* ssl, const void* data, int sz)
         byte* sendBuffer = (byte*)data + sent;  /* may switch on comp */
         int   buffSz = len;                       /* may switch on comp */
 #ifdef HAVE_LIBZ
-#error should not be used.
         byte  comp[MAX_RECORD_SIZE + MAX_COMP_EXTRA];
 #endif
 
@@ -5626,7 +5901,6 @@ int ReceiveData(CYASSL* ssl, byte* output, int sz, int peek)
                     CYASSL_MSG("Peer reset or closed, connection done");
                     return 0;     /* peer reset or closed */
                 }
-                CYASSL_ERROR(ssl->error);
             }
             return ssl->error;
         }
@@ -5977,10 +6251,6 @@ void SetErrorString(int error, char* str)
         XSTRNCPY(str, "ECC DHE shared failure", max);
         break;
 
-    case BAD_MUTEX_ERROR:
-        XSTRNCPY(str, "Bad mutex, operation failed", max);
-        break;
-
     case NOT_CA_ERROR:
         XSTRNCPY(str, "Not a CA by basic constraint error", max);
         break;
@@ -6157,15 +6427,27 @@ const char* const cipher_names[] =
     "PSK-NULL-SHA",
 #endif
 
-#ifdef BUILD_TLS_RSA_WITH_HC_128_CBC_MD5
+#ifdef BUILD_TLS_RSA_WITH_HC_128_MD5
     "HC128-MD5",
 #endif
     
-#ifdef BUILD_TLS_RSA_WITH_HC_128_CBC_SHA
+#ifdef BUILD_TLS_RSA_WITH_HC_128_SHA
     "HC128-SHA",
 #endif
 
-#ifdef BUILD_TLS_RSA_WITH_RABBIT_CBC_SHA
+#ifdef BUILD_TLS_RSA_WITH_HC_128_B2B256
+    "HC128-B2B256",
+#endif
+
+#ifdef BUILD_TLS_RSA_WITH_AES_128_CBC_B2B256
+    "AES128-B2B256",
+#endif
+
+#ifdef BUILD_TLS_RSA_WITH_AES_256_CBC_B2B256
+    "AES256-B2B256",
+#endif
+
+#ifdef BUILD_TLS_RSA_WITH_RABBIT_SHA
     "RABBIT-SHA",
 #endif
 
@@ -6465,16 +6747,28 @@ int cipher_name_idx[] =
     TLS_PSK_WITH_NULL_SHA,
 #endif
 
-#ifdef BUILD_TLS_RSA_WITH_HC_128_CBC_MD5
-    TLS_RSA_WITH_HC_128_CBC_MD5,    
+#ifdef BUILD_TLS_RSA_WITH_HC_128_MD5
+    TLS_RSA_WITH_HC_128_MD5,    
 #endif
 
-#ifdef BUILD_TLS_RSA_WITH_HC_128_CBC_SHA
-    TLS_RSA_WITH_HC_128_CBC_SHA,    
+#ifdef BUILD_TLS_RSA_WITH_HC_128_SHA
+    TLS_RSA_WITH_HC_128_SHA,    
 #endif
 
-#ifdef BUILD_TLS_RSA_WITH_RABBIT_CBC_SHA
-    TLS_RSA_WITH_RABBIT_CBC_SHA,    
+#ifdef BUILD_TLS_RSA_WITH_HC_128_B2B256
+    TLS_RSA_WITH_HC_128_B2B256,
+#endif
+
+#ifdef BUILD_TLS_RSA_WITH_AES_128_CBC_B2B256
+    TLS_RSA_WITH_AES_128_CBC_B2B256,
+#endif
+
+#ifdef BUILD_TLS_RSA_WITH_AES_256_CBC_B2B256
+    TLS_RSA_WITH_AES_256_CBC_B2B256,
+#endif
+
+#ifdef BUILD_TLS_RSA_WITH_RABBIT_SHA
+    TLS_RSA_WITH_RABBIT_SHA,    
 #endif
 
 #ifdef BUILD_TLS_NTRU_RSA_WITH_RC4_128_SHA
@@ -7682,6 +7976,8 @@ static void PickHashSigAlgo(CYASSL* ssl,
         int    ret = 0;
         byte   doUserRsa = 0;
 
+        (void)doUserRsa;
+
         #ifdef HAVE_PK_CALLBACKS
             #ifndef NO_RSA
                 if (ssl->ctx->RsaEncCb)
@@ -7826,7 +8122,7 @@ static void PickHashSigAlgo(CYASSL* ssl,
             case ecc_diffie_hellman_kea:
                 {
                     ecc_key  myKey;
-                    ecc_key* peerKey = &myKey;
+                    ecc_key* peerKey = NULL;
                     word32   size = sizeof(encSecret);
 
                     if (ssl->specs.static_ecdh) {
@@ -7840,6 +8136,9 @@ static void PickHashSigAlgo(CYASSL* ssl,
                             return NO_PEER_KEY;
                         peerKey = ssl->peerEccKey;
                     }
+
+                    if (peerKey == NULL)
+                        return NO_PEER_KEY;
 
                     ecc_init(&myKey);
                     ret = ecc_make_key(ssl->rng, peerKey->dp->size, &myKey);
@@ -7959,7 +8258,7 @@ static void PickHashSigAlgo(CYASSL* ssl,
 #ifdef HAVE_ECC
         ecc_key            eccKey;
 #endif
-        CYASSL_ENTER("SendCertificateVerify");
+
         (void)idx;
 
         if (ssl->options.sendVerify == SEND_BLANK_CERT)
@@ -7973,15 +8272,12 @@ static void PickHashSigAlgo(CYASSL* ssl,
         output = ssl->buffers.outputBuffer.buffer +
                  ssl->buffers.outputBuffer.length;
 
-        CYASSL_MSG("Calling BuildCertHashes");
-
         BuildCertHashes(ssl, &ssl->certHashes);
 
 #ifdef HAVE_ECC
         ecc_init(&eccKey);
 #endif
 #ifndef NO_RSA
-        CYASSL_MSG("InitRsaKey");
         InitRsaKey(&key, ssl->heap);
         ret = RsaPrivateKeyDecode(ssl->buffers.key.buffer, &idx, &key,
                                   ssl->buffers.key.length);
@@ -8032,8 +8328,6 @@ static void PickHashSigAlgo(CYASSL* ssl,
                 verify[1] = usingEcc ? ecc_dsa_sa_algo : rsa_sa_algo;
                 extraSz = HASH_SIG_SIZE;
             }
-
-            CYASSL_MSG("if (usingEcc)");
 
             if (usingEcc) {
 #ifdef HAVE_ECC
@@ -8110,8 +8404,6 @@ static void PickHashSigAlgo(CYASSL* ssl,
                         doUserRsa = 1;
                 #endif /*HAVE_PK_CALLBACKS */
 
-                CYASSL_MSG("IsAtLeastTLSv1_2");
-
                 if (IsAtLeastTLSv1_2(ssl)) {
 #ifndef NO_OLD_TLS
                     byte* digest = ssl->certHashes.sha;
@@ -8150,7 +8442,6 @@ static void PickHashSigAlgo(CYASSL* ssl,
                 }
 
                 c16toa((word16)length, verify + extraSz); /* prepend hdr */
-                CYASSL_MSG("Going to RsaSign.");
                 if (doUserRsa) {
                 #ifdef HAVE_PK_CALLBACKS
                     #ifndef NO_RSA
@@ -8174,7 +8465,6 @@ static void PickHashSigAlgo(CYASSL* ssl,
             }
 #endif
             if (ret == 0) {
-                CYASSL_MSG("AddHeaders");
                 AddHeaders(output, length + extraSz + VERIFY_HEADER,
                            certificate_verify, ssl);
 
@@ -8187,7 +8477,6 @@ static void PickHashSigAlgo(CYASSL* ssl,
                             return ret;
                     }
                 #endif
-                CYASSL_MSG("Calling HashOutput");
                 HashOutput(ssl, output, sendSz, 0);
             }
         }
@@ -8207,15 +8496,10 @@ static void PickHashSigAlgo(CYASSL* ssl,
                                   output, sendSz, ssl->heap);
             #endif
             ssl->buffers.outputBuffer.length += sendSz;
-            if (ssl->options.groupMessages) {
-                CYASSL_LEAVE("SendCertificateVerify",0);
+            if (ssl->options.groupMessages)
                 return 0;
-            }
-            else {
-                ret = SendBuffered(ssl);
-                CYASSL_LEAVE("SendCertificateVerify",ret);
-                return ret;
-            }
+            else
+                return SendBuffered(ssl);
         }
         else
             return ret;
@@ -8337,22 +8621,16 @@ static void PickHashSigAlgo(CYASSL* ssl,
         switch(size) {
             case 20:
                 return secp160r1;
-                break;
             case 24:
                 return secp192r1;
-                break;
             case 28:
                 return secp224r1;
-                break;
             case 32:
                 return secp256r1;
-                break;
             case 48:
                 return secp384r1;
-                break;
             case 66:
                 return secp521r1;
-                break;
             default:
                 return 0;
         }        
@@ -8483,7 +8761,7 @@ static void PickHashSigAlgo(CYASSL* ssl,
                 ret = EccPrivateKeyDecode(ssl->buffers.key.buffer, &i,
                                           &dsaKey, ssl->buffers.key.length);
                 if (ret != 0) return ret;
-                sigSz = ecc_sig_size(&dsaKey) + 2;  /* worst case estimate */
+                sigSz = ecc_sig_size(&dsaKey);  /* worst case estimate */
             }
             else {
 #ifndef NO_RSA
@@ -9031,7 +9309,7 @@ static void PickHashSigAlgo(CYASSL* ssl,
                 return 1;
             break;
 
-#ifndef NO_3DES
+#ifndef NO_DES3
         case TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA :
             if (requirement == REQUIRES_RSA)
                 return 1;
@@ -9060,7 +9338,7 @@ static void PickHashSigAlgo(CYASSL* ssl,
 #endif
 #endif /* NO_RSA */
 
-#ifndef NO_3DES
+#ifndef NO_DES3
         case TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA :
             if (requirement == REQUIRES_ECC_DSA)
                 return 1;
@@ -9331,17 +9609,28 @@ static void PickHashSigAlgo(CYASSL* ssl,
                 return 1;
             break;
 
-        case TLS_RSA_WITH_HC_128_CBC_MD5 :
+        case TLS_RSA_WITH_HC_128_MD5 :
             if (requirement == REQUIRES_RSA)
                 return 1;
             break;
                 
-        case TLS_RSA_WITH_HC_128_CBC_SHA :
+        case TLS_RSA_WITH_HC_128_SHA :
             if (requirement == REQUIRES_RSA)
                 return 1;
             break;
 
-        case TLS_RSA_WITH_RABBIT_CBC_SHA :
+        case TLS_RSA_WITH_HC_128_B2B256:
+            if (requirement == REQUIRES_RSA)
+                return 1;
+            break;
+
+        case TLS_RSA_WITH_AES_128_CBC_B2B256:
+        case TLS_RSA_WITH_AES_256_CBC_B2B256:
+            if (requirement == REQUIRES_RSA)
+                return 1;
+            break;
+
+        case TLS_RSA_WITH_RABBIT_SHA :
             if (requirement == REQUIRES_RSA)
                 return 1;
             break;
@@ -9476,6 +9765,13 @@ static void PickHashSigAlgo(CYASSL* ssl,
             }
         }
 
+#ifdef HAVE_SUPPORTED_CURVES
+        if (!TLSX_ValidateEllipticCurves(ssl, first, second)) {
+            CYASSL_MSG("Don't have matching curves");
+                return 0;
+        }
+#endif
+
         /* ECCDHE is always supported if ECC on */
 
         return 1;
@@ -9605,6 +9901,7 @@ static void PickHashSigAlgo(CYASSL* ssl,
 
         if (clSuites.suiteSz > MAX_SUITE_SZ)
             return BUFFER_ERROR;
+        clSuites.hashSigAlgoSz = 0;
 
         /* session size */
         ato16(&input[idx], &sessionSz);
@@ -10449,346 +10746,3 @@ static void PickHashSigAlgo(CYASSL* ssl,
 #endif /* NO_CYASSL_SERVER */
 
 
-#ifdef SINGLE_THREADED
-
-int InitMutex(CyaSSL_Mutex* m)
-{
-    (void)m;
-    return 0;
-}
-
-
-int FreeMutex(CyaSSL_Mutex *m)
-{
-    (void)m;
-    return 0;
-}
-
-
-int LockMutex(CyaSSL_Mutex *m)
-{
-    (void)m;
-    return 0;
-}
-
-
-int UnLockMutex(CyaSSL_Mutex *m)
-{
-    (void)m;
-    return 0;
-}
-
-#else /* MULTI_THREAD */
-
-    #if defined(FREERTOS)
-
-        int InitMutex(CyaSSL_Mutex* m)
-        {
-            int iReturn;
-
-            *m = ( CyaSSL_Mutex ) xSemaphoreCreateMutex();
-            if( *m != NULL )
-                iReturn = 0;
-            else
-                iReturn = BAD_MUTEX_ERROR;
-
-            return iReturn;
-        }
-
-        int FreeMutex(CyaSSL_Mutex* m)
-        {
-            vSemaphoreDelete( *m );
-            return 0;
-        }
-
-        int LockMutex(CyaSSL_Mutex* m)
-        {
-            /* Assume an infinite block, or should there be zero block? */
-            xSemaphoreTake( *m, portMAX_DELAY );
-            return 0;
-        }
-
-        int UnLockMutex(CyaSSL_Mutex* m)
-        {
-            xSemaphoreGive( *m );
-            return 0;
-        }
-
-    #elif defined(CYASSL_SAFERTOS)
-
-        int InitMutex(CyaSSL_Mutex* m)
-        {
-            vSemaphoreCreateBinary(m->mutexBuffer, m->mutex);
-            if (m->mutex == NULL)
-                return BAD_MUTEX_ERROR;
-
-            return 0;
-        }
-
-        int FreeMutex(CyaSSL_Mutex* m)
-        {
-            (void)m;
-            return 0;
-        }
-
-        int LockMutex(CyaSSL_Mutex* m)
-        {
-            /* Assume an infinite block */
-            xSemaphoreTake(m->mutex, portMAX_DELAY);
-            return 0;
-        }
-
-        int UnLockMutex(CyaSSL_Mutex* m)
-        {
-            xSemaphoreGive(m->mutex);
-            return 0;
-        }
-
-
-    #elif defined(USE_WINDOWS_API)
-
-        int InitMutex(CyaSSL_Mutex* m)
-        {
-            InitializeCriticalSection(m);
-            return 0;
-        }
-
-
-        int FreeMutex(CyaSSL_Mutex* m)
-        {
-            DeleteCriticalSection(m);
-            return 0;
-        }
-
-
-        int LockMutex(CyaSSL_Mutex* m)
-        {
-            EnterCriticalSection(m);
-            return 0;
-        }
-
-
-        int UnLockMutex(CyaSSL_Mutex* m)
-        {
-            LeaveCriticalSection(m);
-            return 0;
-        }
-
-    #elif defined(CYASSL_PTHREADS)
-
-        int InitMutex(CyaSSL_Mutex* m)
-        {
-            if (pthread_mutex_init(m, 0) == 0)
-                return 0;
-            else
-                return BAD_MUTEX_ERROR;
-        }
-
-
-        int FreeMutex(CyaSSL_Mutex* m)
-        {
-            if (pthread_mutex_destroy(m) == 0)
-                return 0;
-            else
-                return BAD_MUTEX_ERROR;
-        }
-
-
-        int LockMutex(CyaSSL_Mutex* m)
-        {
-            if (pthread_mutex_lock(m) == 0)
-                return 0;
-            else
-                return BAD_MUTEX_ERROR;
-        }
-
-
-        int UnLockMutex(CyaSSL_Mutex* m)
-        {
-            if (pthread_mutex_unlock(m) == 0)
-                return 0;
-            else
-                return BAD_MUTEX_ERROR;
-        }
-
-    #elif defined(THREADX)
-
-        int InitMutex(CyaSSL_Mutex* m)
-        {
-            if (tx_mutex_create(m, "CyaSSL Mutex", TX_NO_INHERIT) == 0)
-                return 0;
-            else
-                return BAD_MUTEX_ERROR;
-        }
-
-
-        int FreeMutex(CyaSSL_Mutex* m)
-        {
-            if (tx_mutex_delete(m) == 0)
-                return 0;
-            else
-                return BAD_MUTEX_ERROR;
-        }
-
-
-        int LockMutex(CyaSSL_Mutex* m)
-        {
-            if (tx_mutex_get(m, TX_WAIT_FOREVER) == 0)
-                return 0;
-            else
-                return BAD_MUTEX_ERROR;
-        }
-
-
-        int UnLockMutex(CyaSSL_Mutex* m)
-        {
-            if (tx_mutex_put(m) == 0)
-                return 0;
-            else
-                return BAD_MUTEX_ERROR;
-        }
-
-    #elif defined(MICRIUM)
-
-        int InitMutex(CyaSSL_Mutex* m)
-        {
-            #if (NET_SECURE_MGR_CFG_EN == DEF_ENABLED)
-                if (NetSecure_OS_MutexCreate(m) == 0)
-                    return 0;
-                else
-                    return BAD_MUTEX_ERROR;
-            #else
-                return 0;
-            #endif
-        }
-
-
-        int FreeMutex(CyaSSL_Mutex* m)
-        {
-            #if (NET_SECURE_MGR_CFG_EN == DEF_ENABLED)
-                if (NetSecure_OS_FreeMutex(m) == 0)
-                    return 0;
-                else
-                    return BAD_MUTEX_ERROR;
-            #else
-                return 0;
-            #endif
-        }
-
-
-        int LockMutex(CyaSSL_Mutex* m)
-        {
-            #if (NET_SECURE_MGR_CFG_EN == DEF_ENABLED)
-                if (NetSecure_OS_LockMutex(m) == 0)
-                    return 0;
-                else
-                    return BAD_MUTEX_ERROR;
-            #else
-                return 0;
-            #endif
-        }
-
-
-        int UnLockMutex(CyaSSL_Mutex* m)
-        {
-            #if (NET_SECURE_MGR_CFG_EN == DEF_ENABLED)
-                if (NetSecure_OS_UnLockMutex(m) == 0)
-                    return 0;
-                else
-                    return BAD_MUTEX_ERROR;
-            #else
-                return 0;
-            #endif
-
-        }
-
-    #elif defined(EBSNET)
-
-        int InitMutex(CyaSSL_Mutex* m)
-        {
-            if (rtp_sig_mutex_alloc(m, "CyaSSL Mutex") == -1)
-                return BAD_MUTEX_ERROR;
-            else
-                return 0;
-        }
-
-        int FreeMutex(CyaSSL_Mutex* m)
-        {
-            rtp_sig_mutex_free(*m);
-            return 0;
-        }
-
-        int LockMutex(CyaSSL_Mutex* m)
-        {
-            if (rtp_sig_mutex_claim_timed(*m, RTIP_INF) == 0)
-                return 0;
-            else
-                return BAD_MUTEX_ERROR;
-        }
-
-        int UnLockMutex(CyaSSL_Mutex* m)
-        {
-            rtp_sig_mutex_release(*m);
-            return 0;
-        }
-
-    #elif defined(FREESCALE_MQX)
-
-        int InitMutex(CyaSSL_Mutex* m)
-        {
-            if (_mutex_init(m, NULL) == MQX_EOK)
-                return 0;
-            else
-                return BAD_MUTEX_ERROR;
-        }
-
-        int FreeMutex(CyaSSL_Mutex* m)
-        {
-            if (_mutex_destroy(m) == MQX_EOK)
-                return 0;
-            else
-                return BAD_MUTEX_ERROR;
-        }
-
-        int LockMutex(CyaSSL_Mutex* m)
-        {
-            if (_mutex_lock(m) == MQX_EOK)
-                return 0;
-            else
-                return BAD_MUTEX_ERROR;
-        }
-
-        int UnLockMutex(CyaSSL_Mutex* m)
-        {
-            if (_mutex_unlock(m) == MQX_EOK)
-                return 0;
-            else
-                return BAD_MUTEX_ERROR;
-        }
-        
-    #elif defined(CYASSL_MDK_ARM)
-
-        int InitMutex(CyaSSL_Mutex* m)
-        {
-            os_mut_init (m); 
-            return 0;
-        }
-
-        int FreeMutex(CyaSSL_Mutex* m)
-        {
-            return(0) ;
-        }
-
-        int LockMutex(CyaSSL_Mutex* m)
-        {
-            os_mut_wait (m, 0xffff);
-            return(0) ;
-        }
-
-        int UnLockMutex(CyaSSL_Mutex* m)
-        {
-            os_mut_release (m);
-            return 0;
-        }
-    #endif /* USE_WINDOWS_API */
-#endif /* SINGLE_THREADED */

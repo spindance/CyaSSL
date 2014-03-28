@@ -20,9 +20,10 @@
  */
 
 #ifdef HAVE_CONFIG_H
-    @@@ Not part of AL2 Bridge Build @@@
     #include <config.h>
 #endif
+
+#include <cyassl/ctaocrypt/settings.h>
 
 /* on HPUX 11 you may need to install /dev/random see
    http://h20293.www2.hp.com/portal/swdepot/displayProductInfo.do?productNumber=KRNG11I
@@ -30,10 +31,9 @@
 */
 
 #include <cyassl/ctaocrypt/random.h>
-// @@@ #include <cyassl/ctaocrypt/error.h>
+#include <cyassl/ctaocrypt/error.h>
 
 #ifdef NO_RC4
-    @@@ Not part of AL2 Bridge Build @@@
     #include <cyassl/ctaocrypt/sha256.h>
 
     #ifdef NO_INLINE
@@ -45,7 +45,6 @@
 #endif
 
 #if defined(USE_WINDOWS_API)
-    @@@ Not part of AL2 Bridge Build @@@
     #ifndef _WIN32_WINNT
         #define _WIN32_WINNT 0x0400
     #endif
@@ -354,7 +353,6 @@ byte RNG_GenerateByte(RNG* rng)
 
 #ifdef HAVE_CAVIUM
 
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 #include <cyassl/ctaocrypt/logging.h>
 #include "cavium_common.h"
 
@@ -419,7 +417,6 @@ int GenerateSeed(OS_Seed* os, byte* output, word32 sz)
 
 #elif defined(HAVE_RTP_SYS) || defined(EBSNET)
 
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 #include "rtprand.h"   /* rtp_rand () */
 #include "rtptime.h"   /* rtp_get_system_msec() */
 
@@ -463,19 +460,25 @@ int GenerateSeed(OS_Seed* os, byte* output, word32 sz)
 
 #elif defined(MICROCHIP_PIC32)
 
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-#include <peripheral/timer.h>
+#ifdef MICROCHIP_MPLAB_HARMONY
+    #define PIC32_SEED_COUNT _CP0_GET_COUNT
+#else
+    #if !defined(CYASSL_MICROCHIP_PIC32MZ)
+        #include <peripheral/timer.h>
+    #endif
+    #define PIC32_SEED_COUNT ReadCoreTimer
+#endif
 
 /* uses the core timer, in nanoseconds to seed srand */
 int GenerateSeed(OS_Seed* os, byte* output, word32 sz)
 {
     int i;
-    srand(ReadCoreTimer() * 25);
+    srand(PIC32_SEED_COUNT() * 25);
 
     for (i = 0; i < sz; i++ ) {
         output[i] = rand() % 256;
         if ( (i % 8) == 7)
-            srand(ReadCoreTimer() * 25);
+            srand(PIC32_SEED_COUNT() * 25);
     }
 
     return 0;
@@ -531,6 +534,45 @@ int GenerateSeed(OS_Seed* os, byte* output, word32 sz)
 
             return 0;
         }
+
+    #elif defined(FREESCALE_K53_RNGB)
+        /*
+         * Generates a RNG seed using the Random Number Generator (RNGB)
+         * on the Kinetis K53. Documentation located in Chapter 33 of
+         * K53 Sub-Family Reference Manual (see note in the README for link).
+         */
+        int GenerateSeed(OS_Seed* os, byte* output, word32 sz)
+        {
+            int i;
+
+            /* turn on RNGB module */
+            SIM_SCGC3 |= SIM_SCGC3_RNGB_MASK;
+
+            /* reset RNGB */
+            RNG_CMD |= RNG_CMD_SR_MASK;
+
+            /* FIFO generate interrupt, return all zeros on underflow,
+             * set auto reseed */
+            RNG_CR |= (RNG_CR_FUFMOD_MASK | RNG_CR_AR_MASK);
+
+            /* gen seed, clear interrupts, clear errors */
+            RNG_CMD |= (RNG_CMD_GS_MASK | RNG_CMD_CI_MASK | RNG_CMD_CE_MASK);
+
+            /* wait for seeding to complete */
+            while ((RNG_SR & RNG_SR_SDN_MASK) == 0) {}
+
+            for (i = 0; i < sz; i++) {
+
+                /* wait for a word to be available from FIFO */
+                while((RNG_SR & RNG_SR_FIFO_LVL_MASK) == 0) {}
+
+                /* get value */
+                output[i] = RNG_OUT;
+            }
+
+            return 0;
+        }
+
 	#else
         #warning "write a real random seed!!!!, just for testing now"
 
@@ -546,9 +588,8 @@ int GenerateSeed(OS_Seed* os, byte* output, word32 sz)
 
 #elif defined(STM32F2_RNG)
     #undef RNG
-    // @@@ This IS part of AL2 Bridge Build @@@ //
-    #include "stm32f4xx_rng.h"
-    #include "stm32f4xx_rcc.h"
+    #include "stm32f2xx_rng.h"
+    #include "stm32f2xx_rcc.h"
     /*
      * Generate a RNG seed using the hardware random number generator 
      * on the STM32F2. Documentation located in STM32F2xx Standard Peripheral 

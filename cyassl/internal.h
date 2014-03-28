@@ -37,6 +37,7 @@
 #include <cyassl/ctaocrypt/aes.h>
 #include <cyassl/ctaocrypt/camellia.h>
 #include <cyassl/ctaocrypt/logging.h>
+#include <cyassl/ctaocrypt/hmac.h>
 #ifndef NO_RC4
     #include <cyassl/ctaocrypt/arc4.h>
 #endif
@@ -89,7 +90,11 @@
 #elif defined(FREESCALE_MQX)
     /* do nothing */
 #elif defined(CYASSL_MDK_ARM)
-    #include <rtl.h>
+    #if defined(CYASSL_MDK5)
+         #include "cmsis_os.h"
+    #else
+        #include <rtl.h>
+    #endif
 #else
     #ifndef SINGLE_THREADED
         #define CYASSL_PTHREADS
@@ -191,6 +196,10 @@ void c32to24(word32 in, word24 out);
         #define BUILD_TLS_RSA_WITH_AES_128_CCM_8
         #define BUILD_TLS_RSA_WITH_AES_256_CCM_8
     #endif
+    #if defined(HAVE_BLAKE2)
+        #define BUILD_TLS_RSA_WITH_AES_128_CBC_B2B256
+        #define BUILD_TLS_RSA_WITH_AES_256_CBC_B2B256
+    #endif
 #endif
 
 #if defined(HAVE_CAMELLIA) && !defined(NO_TLS)
@@ -250,15 +259,18 @@ void c32to24(word32 in, word24 out);
 #endif
 
 #if !defined(NO_HC128) && !defined(NO_RSA) && !defined(NO_TLS)
-    #define BUILD_TLS_RSA_WITH_HC_128_CBC_MD5
+    #define BUILD_TLS_RSA_WITH_HC_128_MD5
   #if !defined(NO_SHA)
-    #define BUILD_TLS_RSA_WITH_HC_128_CBC_SHA
+    #define BUILD_TLS_RSA_WITH_HC_128_SHA
+  #endif
+  #if defined(HAVE_BLAKE2)
+    #define BUILD_TLS_RSA_WITH_HC_128_B2B256
   #endif
 #endif
 
 #if !defined(NO_RABBIT) && !defined(NO_TLS) && !defined(NO_RSA)
   #if !defined(NO_SHA)
-    #define BUILD_TLS_RSA_WITH_RABBIT_CBC_SHA
+    #define BUILD_TLS_RSA_WITH_RABBIT_SHA
   #endif
 #endif
 
@@ -381,12 +393,13 @@ void c32to24(word32 in, word24 out);
     #define BUILD_AESGCM
 #endif
 
-#if defined(BUILD_TLS_RSA_WITH_HC_128_CBC_SHA) || \
-    defined(BUILD_TLS_RSA_WITH_HC_128_CBC_MD5)
+#if defined(BUILD_TLS_RSA_WITH_HC_128_SHA) || \
+    defined(BUILD_TLS_RSA_WITH_HC_128_MD5) || \
+    defined(BUILD_TLS_RSA_WITH_HC_128_B2B256)
     #define BUILD_HC128
 #endif
 
-#if defined(BUILD_TLS_RSA_WITH_RABBIT_CBC_SHA)
+#if defined(BUILD_TLS_RSA_WITH_RABBIT_SHA)
     #define BUILD_RABBIT
 #endif
 
@@ -461,9 +474,14 @@ enum {
     TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA384 = 0x26,
 
     /* CyaSSL extension - eSTREAM */
-    TLS_RSA_WITH_HC_128_CBC_MD5       = 0xFB,
-    TLS_RSA_WITH_HC_128_CBC_SHA       = 0xFC,
-    TLS_RSA_WITH_RABBIT_CBC_SHA       = 0xFD,
+    TLS_RSA_WITH_HC_128_MD5       = 0xFB,
+    TLS_RSA_WITH_HC_128_SHA       = 0xFC,
+    TLS_RSA_WITH_RABBIT_SHA       = 0xFD,
+
+    /* CyaSSL extension - Blake2b 256 */
+    TLS_RSA_WITH_AES_128_CBC_B2B256   = 0xF8,
+    TLS_RSA_WITH_AES_256_CBC_B2B256   = 0xF9,
+    TLS_RSA_WITH_HC_128_B2B256        = 0xFA,   /* eSTREAM too */
 
     /* CyaSSL extension - NTRU */
     TLS_NTRU_RSA_WITH_RC4_128_SHA      = 0xe5,
@@ -514,20 +532,11 @@ enum {
     TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA    = 0x45,
     TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA    = 0x88,
     TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA256 = 0xbe,
-    TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA256 = 0xc4
+    TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA256 = 0xc4,
 
+    /* Renegotiation Indication Extension Special Suite */
+    TLS_EMPTY_RENEGOTIATION_INFO_SCSV        = 0xff
 };
-
-
-#if defined(CYASSL_SHA384)
-    #define MAX_DIGEST_SIZE SHA384_DIGEST_SIZE
-#elif !defined(NO_SHA256)
-    #define MAX_DIGEST_SIZE SHA256_DIGEST_SIZE
-#elif !defined(NO_MD5) && !defined(NO_SHA)
-    #define MAX_DIGEST_SIZE (SHA_DIGEST_SIZE + MD5_DIGEST_SIZE)
-#else
-    #error "You have configured the build so there isn't any hashing."
-#endif
 
 
 enum Misc {
@@ -552,26 +561,13 @@ enum Misc {
     ENCRYPT_LEN     = 512,      /* allow 4096 bit static buffer */
     SIZEOF_SENDER   =  4,       /* clnt or srvr           */
     FINISHED_SZ     = 36,       /* MD5_DIGEST_SIZE + SHA_DIGEST_SIZE */
-#if defined CYASSL_SET_MAX_RECORD_SIZE
-    MAX_RECORD_SIZE = CYASSL_SET_MAX_RECORD_SIZE,
-#else
     MAX_RECORD_SIZE = 16384,    /* 2^14, max size by standard */
-#endif
     MAX_MSG_EXTRA   = 38 + MAX_DIGEST_SIZE,
                                 /* max added to msg, mac + pad  from */
                                 /* RECORD_HEADER_SZ + BLOCK_SZ (pad) + Max
                                    digest sz + BLOC_SZ (iv) + pad byte (1) */
-#if defined CYASSL_SET_MAX_COMP_EXTRA
-    MAX_COMP_EXTRA  = CYASSL_SET_MAX_COMP_EXTRA,     /* max compression extra */
-#else
     MAX_COMP_EXTRA  = 1024,     /* max compression extra */
-#endif
-
-#if defined CYASSL_SET_MAX_MTU
-    MAX_MTU         = CYASSL_SET_MAX_MTU,     /* max expected MTU */
-#else
     MAX_MTU         = 1500,     /* max expected MTU */
-#endif
     MAX_UDP_SIZE    = 8192 - 100, /* was MAX_MTU - 100 */
     MAX_DH_SZ       = 612,      /* 2240 p, pub, g + 2 byte size for each */
     MAX_STR_VERSION = 8,        /* string rep of protocol version */
@@ -613,6 +609,7 @@ enum Misc {
     CERT_HEADER_SZ        = 3,  /* always 3 bytes          */
     REQ_HEADER_SZ         = 2,  /* cert request header sz  */
     HINT_LEN_SZ           = 2,  /* length of hint size field */
+    TRUNCATED_HMAC_SZ     = 10, /* length of hmac w/ truncated hmac extension */
     HELLO_EXT_TYPE_SZ     = 2,  /* length of a hello extension type */
     HELLO_EXT_SZ          = 8,  /* total length of the lazy hello extensions */
     HELLO_EXT_LEN         = 6,  /* length of the lazy hello extensions */
@@ -972,41 +969,6 @@ struct CYASSL_CIPHER {
 };
 
 
-#ifdef SINGLE_THREADED
-    typedef int CyaSSL_Mutex;
-#else /* MULTI_THREADED */
-    /* FREERTOS comes first to enable use of FreeRTOS Windows simulator only */
-    #ifdef FREERTOS
-        typedef xSemaphoreHandle CyaSSL_Mutex;
-    #elif defined(CYASSL_SAFERTOS)
-        typedef struct CyaSSL_Mutex {
-            signed char mutexBuffer[portQUEUE_OVERHEAD_BYTES];
-            xSemaphoreHandle mutex;
-        } CyaSSL_Mutex;
-    #elif defined(USE_WINDOWS_API)
-        typedef CRITICAL_SECTION CyaSSL_Mutex;
-    #elif defined(CYASSL_PTHREADS)
-        typedef pthread_mutex_t CyaSSL_Mutex;
-    #elif defined(THREADX)
-        typedef TX_MUTEX CyaSSL_Mutex;
-    #elif defined(MICRIUM)
-        typedef OS_MUTEX CyaSSL_Mutex;
-    #elif defined(EBSNET)
-        typedef RTP_MUTEX CyaSSL_Mutex;
-    #elif defined(FREESCALE_MQX)
-        typedef MUTEX_STRUCT CyaSSL_Mutex;
-    #elif defined(CYASSL_MDK_ARM)
-        typedef OS_MUT CyaSSL_Mutex;
-    #else
-        #error Need a mutex type in multithreaded mode
-    #endif /* USE_WINDOWS_API */
-#endif /* SINGLE_THREADED */
-
-CYASSL_LOCAL int InitMutex(CyaSSL_Mutex*);
-CYASSL_LOCAL int FreeMutex(CyaSSL_Mutex*);
-CYASSL_LOCAL int LockMutex(CyaSSL_Mutex*);
-CYASSL_LOCAL int UnLockMutex(CyaSSL_Mutex*);
-
 typedef struct OCSP_Entry OCSP_Entry;
 
 #ifdef SHA_DIGEST_SIZE
@@ -1021,24 +983,23 @@ typedef struct OCSP_Entry OCSP_Entry;
 #endif
 
 struct OCSP_Entry {
-    OCSP_Entry* next;                       /* next entry             */
+    OCSP_Entry* next;                        /* next entry             */
     byte    issuerHash[OCSP_DIGEST_SIZE];    /* issuer hash            */ 
     byte    issuerKeyHash[OCSP_DIGEST_SIZE]; /* issuer public key hash */
-    CertStatus* status;                     /* OCSP response list     */
-    int         totalStatus;                /* number on list         */
+    CertStatus* status;                      /* OCSP response list     */
+    int         totalStatus;                 /* number on list         */
 };
 
 
+#ifndef HAVE_OCSP
+    typedef struct CYASSL_OCSP CYASSL_OCSP;
+#endif
+
 /* CyaSSL OCSP controller */
 struct CYASSL_OCSP {
-    byte enabled;
-    byte useOverrideUrl;
-    byte useNonce;
-    char overrideUrl[80];
-    OCSP_Entry* ocspList;
-    void* IOCB_OcspCtx;
-    CallbackIOOcsp CBIOOcsp;
-    CallbackIOOcspRespFree CBIOOcspRespFree;
+    CYASSL_CERT_MANAGER* cm;            /* pointer back to cert manager */
+    OCSP_Entry*          ocspList;      /* OCSP response list */
+    CyaSSL_Mutex         ocspLock;      /* OCSP list lock */
 };
 
 #ifndef MAX_DATE_SIZE
@@ -1116,6 +1077,14 @@ struct CYASSL_CERT_MANAGER {
     byte            crlEnabled;         /* is CRL on ? */
     byte            crlCheckAll;        /* always leaf, but all ? */
     CbMissingCRL    cbMissingCRL;       /* notify through cb of missing crl */
+    CYASSL_OCSP*    ocsp;               /* OCSP checker */
+    byte            ocspEnabled;        /* is OCSP on ? */
+    byte            ocspSendNonce;      /* send the OCSP nonce ? */
+    byte            ocspUseOverrideURL; /* ignore cert's responder, override */
+    char*           ocspOverrideURL;    /* use this responder */
+    void*           ocspIOCtx;          /* I/O callback CTX */
+    CbOCSPIO        ocspIOCb;           /* I/O callback for OCSP lookup */
+    CbOCSPRespFree  ocspRespFreeCb;     /* Frees OCSP Response from IO Cb */
 };
 
 CYASSL_LOCAL int CM_SaveCertCache(CYASSL_CERT_MANAGER*, const char*);
@@ -1141,11 +1110,8 @@ typedef struct CYASSL_DTLS_CTX {
 typedef enum {
     SERVER_NAME_INDICATION =  0,
     MAX_FRAGMENT_LENGTH    =  1,
-  /*CLIENT_CERTIFICATE_URL =  2,
-    TRUSTED_CA_KEYS        =  3,*/
     TRUNCATED_HMAC         =  4,
-  /*STATUS_REQUEST         =  5,
-    SIGNATURE_ALGORITHMS   = 13,*/
+    ELLIPTIC_CURVES        = 10
 } TLSX_Type;
 
 typedef struct TLSX {
@@ -1193,6 +1159,8 @@ CYASSL_LOCAL void   TLSX_SNI_SetOptions(TLSX* extensions, byte type,
 CYASSL_LOCAL byte   TLSX_SNI_Status(TLSX* extensions, byte type);
 CYASSL_LOCAL word16 TLSX_SNI_GetRequest(TLSX* extensions, byte type,
                                                                    void** data);
+CYASSL_LOCAL int    TLSX_SNI_GetFromBuffer(const byte* buffer, word32 bufferSz,
+                                         byte type, byte* sni, word32* inOutSz);
 #endif
 
 #endif /* HAVE_SNI */
@@ -1206,11 +1174,26 @@ CYASSL_LOCAL int TLSX_UseMaxFragment(TLSX** extensions, byte mfl);
 
 #ifdef HAVE_TRUNCATED_HMAC
 
-#define TRUNCATED_HMAC_SIZE 10
-
 CYASSL_LOCAL int TLSX_UseTruncatedHMAC(TLSX** extensions);
 
 #endif /* HAVE_TRUNCATED_HMAC */
+
+#ifdef HAVE_SUPPORTED_CURVES
+
+typedef struct EllipticCurve {
+    word16                name; /* CurveNames    */
+    struct EllipticCurve* next; /* List Behavior */
+
+} EllipticCurve;
+
+CYASSL_LOCAL int TLSX_UseSupportedCurve(TLSX** extensions, word16 name);
+
+#ifndef NO_CYASSL_SERVER
+CYASSL_LOCAL int TLSX_ValidateEllipticCurves(CYASSL* ssl, byte first,
+                                                                   byte second);
+#endif
+
+#endif /* HAVE_SUPPORTED_CURVES */
 
 #endif /* HAVE_TLS_EXTENSIONS */
 
@@ -1253,6 +1236,7 @@ struct CYASSL_CTX {
     word32          timeout;            /* session timeout */
 #ifdef HAVE_ECC
     word16          eccTempKeySz;       /* in octets 20 - 66 */
+    word32          pkCurveOID;         /* curve Ecc_Sum */
 #endif
 #ifndef NO_PSK
     byte        havePSK;                /* psk key set by user */
@@ -1340,7 +1324,8 @@ enum MACAlgorithm {
     sha256_mac,
     sha384_mac,
     sha512_mac,
-    rmd_mac
+    rmd_mac,
+    blake2b_mac
 };
 
 
@@ -1399,6 +1384,30 @@ enum ClientCertificateType {
 enum CipherType { stream, block, aead };
 
 
+#ifdef CYASSL_DTLS
+
+    #ifdef WORD64_AVAILABLE
+        typedef word64 DtlsSeq;
+    #else
+        typedef word32 DtlsSeq;
+    #endif
+    #define DTLS_SEQ_BITS (sizeof(DtlsSeq) * CHAR_BIT)
+
+    typedef struct DtlsState {
+        DtlsSeq window;     /* Sliding window for current epoch    */
+        word16 nextEpoch;   /* Expected epoch in next record       */
+        word32 nextSeq;     /* Expected sequence in next record    */
+
+        word16 curEpoch;    /* Received epoch in current record    */
+        word32 curSeq;      /* Received sequence in current record */
+
+        DtlsSeq prevWindow; /* Sliding window for old epoch        */
+        word32 prevSeq;     /* Next sequence in allowed old epoch  */
+    } DtlsState;
+
+#endif /* CYASSL_DTLS */
+
+
 /* keys and secrets */
 typedef struct Keys {
     byte client_write_MAC_secret[MAX_DIGEST_SIZE];   /* max sizes */
@@ -1417,15 +1426,13 @@ typedef struct Keys {
     word32 sequence_number;
     
 #ifdef CYASSL_DTLS
-    word32 dtls_sequence_number;
-    word32 dtls_peer_sequence_number;
-    word32 dtls_expected_peer_sequence_number;
-    word16 dtls_handshake_number;
+    DtlsState dtls_state;                       /* Peer's state */
     word16 dtls_peer_handshake_number;
     word16 dtls_expected_peer_handshake_number;
-    word16 dtls_epoch;
-    word16 dtls_peer_epoch;
-    word16 dtls_expected_peer_epoch;
+
+    word16 dtls_epoch;                          /* Current tx epoch    */
+    word32 dtls_sequence_number;                /* Current tx sequence */
+    word16 dtls_handshake_number;               /* Current tx handshake seq */
 #endif
 
     word32 encryptSz;             /* last size of encrypted data   */
@@ -1664,9 +1671,18 @@ typedef struct Arrays {
 #define ASN_NAME_MAX 256
 #endif
 
+#ifndef MAX_DATE_SZ
+#define MAX_DATE_SZ 32
+#endif
+
 struct CYASSL_X509_NAME {
-    char  name[ASN_NAME_MAX];
+    char  *name;
+    char  staticName[ASN_NAME_MAX];
+    int   dynamicName;
     int   sz;
+#ifdef OPENSSL_EXTRA
+    DecodedName fullName;
+#endif /* OPENSSL_EXTRA */
 };
 
 #ifndef EXTERNAL_SERIAL_SIZE
@@ -1678,6 +1694,7 @@ struct CYASSL_X509_NAME {
 #endif
 
 struct CYASSL_X509 {
+    int              version;
     CYASSL_X509_NAME issuer;
     CYASSL_X509_NAME subject;
     int              serialSz;
@@ -1690,11 +1707,46 @@ struct CYASSL_X509 {
     byte             hwType[EXTERNAL_SERIAL_SIZE];
     int              hwSerialNumSz;
     byte             hwSerialNum[EXTERNAL_SERIAL_SIZE];
+    #ifdef OPENSSL_EXTRA
+        byte             certPolicySet;
+        byte             certPolicyCrit;
+    #endif /* OPENSSL_EXTRA */
 #endif
+    int              notBeforeSz;
+    byte             notBefore[MAX_DATE_SZ];
+    int              notAfterSz;
+    byte             notAfter[MAX_DATE_SZ];
+    int              sigOID;
+    buffer           sig;
+    int              pubKeyOID;
+    buffer           pubKey;
+    #ifdef HAVE_ECC
+        word32       pkCurveOID;
+    #endif /* HAVE_ECC */
     buffer           derCert;                        /* may need  */
     DNS_entry*       altNames;                       /* alt names list */
     DNS_entry*       altNamesNext;                   /* hint for retrieval */
     byte             dynamicMemory;                  /* dynamic memory flag */
+    byte             isCa;
+#ifdef OPENSSL_EXTRA
+    word32           pathLength;
+    word16           keyUsage;
+    byte             basicConstSet;
+    byte             basicConstCrit;
+    byte             basicConstPlSet;
+    byte             subjAltNameSet;
+    byte             subjAltNameCrit;
+    byte             authKeyIdSet;
+    byte             authKeyIdCrit;
+    byte*            authKeyId;
+    word32           authKeyIdSz;
+    byte             subjKeyIdSet;
+    byte             subjKeyIdCrit;
+    byte*            subjKeyId;
+    word32           subjKeyIdSz;
+    byte             keyUsageSet;
+    byte             keyUsageCrit;
+#endif /* OPENSSL_EXTRA */
 };
 
 
@@ -1804,6 +1856,7 @@ struct CYASSL {
     ecc_key*        eccTempKey;              /* private ECDHE key */
     ecc_key*        eccDsaKey;               /* private ECDSA key */
     word16          eccTempKeySz;            /* in octets 20 - 66 */
+    word32          pkCurveOID;              /* curve Ecc_Sum     */
     byte            peerEccKeyPresent;
     byte            peerEccDsaKeyPresent;
     byte            eccTempKeyPresent;
@@ -2068,6 +2121,8 @@ CYASSL_LOCAL  int GrowInputBuffer(CYASSL* ssl, int size, int usedLength);
 
 CYASSL_LOCAL word32  LowResTimer(void);
 
+CYASSL_LOCAL void InitX509Name(CYASSL_X509_NAME*, int);
+CYASSL_LOCAL void FreeX509Name(CYASSL_X509_NAME* name);
 CYASSL_LOCAL void InitX509(CYASSL_X509*, int);
 CYASSL_LOCAL void FreeX509(CYASSL_X509*);
 #ifndef NO_CERTS

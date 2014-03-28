@@ -208,10 +208,8 @@ static const word16      yasslPort = 11111;
 static INLINE void err_sys(const char* msg)
 {
     printf("yassl error: %s\n", msg);
-    #ifndef CYASSL_MDK_SHELL
     if (msg)
         exit(EXIT_FAILURE);
-    #endif
 }
 
 
@@ -863,6 +861,7 @@ static INLINE unsigned int my_psk_server_cb(CYASSL* ssl, const char* identity,
 
 static INLINE int myVerify(int preverify, CYASSL_X509_STORE_CTX* store)
 {
+    (void)preverify;
     char buffer[CYASSL_MAX_ERROR_SZ];
 
 #ifdef OPENSSL_EXTRA
@@ -1389,7 +1388,7 @@ static INLINE int myDecryptVerifyCb(CYASSL* ssl,
     unsigned int padByte = 0;
     Hmac hmac;
     byte myInner[CYASSL_TLS_HMAC_INNER_SZ];
-    byte verify[INNER_HASH_SIZE];
+    byte verify[MAX_DIGEST_SIZE];
     const char* tlsStr = "TLS";
 
     /* example supports (d)tls aes */
