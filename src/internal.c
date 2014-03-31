@@ -4050,9 +4050,12 @@ static INLINE int Encrypt(CYASSL* ssl, byte* out, const byte* input, word16 sz)
     (void)out;
     (void)input;
     (void)sz;
+    int ret;
 
+    CYASSL_ENTER("Encrypt");
     if (ssl->encrypt.setup == 0) {
         CYASSL_MSG("Encrypt ciphers not setup");
+        CYASSL_LEAVE("Encrypt",ENCRYPT_ERROR);
         return ENCRYPT_ERROR;
     }
 
@@ -4071,7 +4074,9 @@ static INLINE int Encrypt(CYASSL* ssl, byte* out, const byte* input, word16 sz)
 
         #ifdef BUILD_AES
             case cyassl_aes:
-                return AesCbcEncrypt(ssl->encrypt.aes, out, input, sz);
+                ret = AesCbcEncrypt(ssl->encrypt.aes, out, input, sz);
+                CYASSL_LEAVE("Encrypt",ret);
+                return ret;
         #endif
 
         #ifdef BUILD_AESGCM
@@ -4166,12 +4171,16 @@ static INLINE int Encrypt(CYASSL* ssl, byte* out, const byte* input, word16 sz)
 
         #ifdef HAVE_HC128
             case cyassl_hc128:
-                return Hc128_Process(ssl->encrypt.hc128, out, input, sz);
+                ret = Hc128_Process(ssl->encrypt.hc128, out, input, sz);
+                CYASSL_LEAVE("Encrypt",ENCRYPT_ERROR);
+                return ret;
         #endif
 
         #ifdef BUILD_RABBIT
             case cyassl_rabbit:
-                return RabbitProcess(ssl->encrypt.rabbit, out, input, sz);
+                ret = RabbitProcess(ssl->encrypt.rabbit, out, input, sz);
+                CYASSL_LEAVE("Encrypt",ENCRYPT_ERROR);
+                return ret;
                 break;
         #endif
 
@@ -4185,9 +4194,11 @@ static INLINE int Encrypt(CYASSL* ssl, byte* out, const byte* input, word16 sz)
 
             default:
                 CYASSL_MSG("CyaSSL Encrypt programming error");
+                CYASSL_LEAVE("Encrypt",ENCRYPT_ERROR);
                 return ENCRYPT_ERROR;
     }
 
+    CYASSL_LEAVE("Encrypt",0);
     return 0;
 }
 
@@ -4199,9 +4210,13 @@ static INLINE int Decrypt(CYASSL* ssl, byte* plain, const byte* input,
     (void)plain;
     (void)input;
     (void)sz;
+    int ret;
+
+    CYASSL_ENTER("Decrypt");
 
     if (ssl->decrypt.setup == 0) {
         CYASSL_MSG("Decrypt ciphers not setup");
+        CYASSL_LEAVE("Decrypt",DECRYPT_ERROR);
         return DECRYPT_ERROR;
     }
 
@@ -4220,7 +4235,9 @@ static INLINE int Decrypt(CYASSL* ssl, byte* plain, const byte* input,
 
         #ifdef BUILD_AES
             case cyassl_aes:
-                return AesCbcDecrypt(ssl->decrypt.aes, plain, input, sz);
+                ret = AesCbcDecrypt(ssl->decrypt.aes, plain, input, sz);
+                CYASSL_LEAVE("Decrypt",ret);
+                return ret;
         #endif
 
         #ifdef BUILD_AESGCM
@@ -4252,6 +4269,7 @@ static INLINE int Decrypt(CYASSL* ssl, byte* plain, const byte* input,
                             additional, AEAD_AUTH_DATA_SZ) < 0) {
                     SendAlert(ssl, alert_fatal, bad_record_mac);
                     XMEMSET(nonce, 0, AEAD_NONCE_SZ);
+                    CYASSL_LEAVE("Decrypt",VERIFY_MAC_ERROR);
                     return VERIFY_MAC_ERROR;
                 }
                 XMEMSET(nonce, 0, AEAD_NONCE_SZ);
@@ -4288,6 +4306,7 @@ static INLINE int Decrypt(CYASSL* ssl, byte* plain, const byte* input,
                             additional, AEAD_AUTH_DATA_SZ) < 0) {
                     SendAlert(ssl, alert_fatal, bad_record_mac);
                     XMEMSET(nonce, 0, AEAD_NONCE_SZ);
+                    CYASSL_LEAVE("Decrypt",VERIFY_MAC_ERROR);
                     return VERIFY_MAC_ERROR;
                 }
                 XMEMSET(nonce, 0, AEAD_NONCE_SZ);
@@ -4303,12 +4322,16 @@ static INLINE int Decrypt(CYASSL* ssl, byte* plain, const byte* input,
 
         #ifdef HAVE_HC128
             case cyassl_hc128:
-                return Hc128_Process(ssl->decrypt.hc128, plain, input, sz);
+                ret = Hc128_Process(ssl->decrypt.hc128, plain, input, sz);
+                CYASSL_LEAVE("Decrypt",ret);
+                return ret;
         #endif
 
         #ifdef BUILD_RABBIT
             case cyassl_rabbit:
-                return RabbitProcess(ssl->decrypt.rabbit, plain, input, sz);
+                ret = RabbitProcess(ssl->decrypt.rabbit, plain, input, sz);
+                CYASSL_LEAVE("Decrypt",ret);
+                return ret;
                 break;
         #endif
 
@@ -4322,8 +4345,11 @@ static INLINE int Decrypt(CYASSL* ssl, byte* plain, const byte* input,
                 
             default:
                 CYASSL_MSG("CyaSSL Decrypt programming error");
+                CYASSL_LEAVE("Decrypt",DECRYPT_ERROR);
                 return DECRYPT_ERROR;
     }
+
+    CYASSL_LEAVE("Decrypt",0);
     return 0;
 }
 

@@ -47,11 +47,21 @@ CYASSL_API int CyaSSL_SetLoggingCb(CyaSSL_Logging_cb log_function);
 
 #ifdef DEBUG_CYASSL
 
-    void CYASSL_ENTER(const char* msg);
-    void CYASSL_LEAVE(const char* msg, int ret);
+#    ifndef CYASSL_ENTER
+          void CYASSL_ENTER(const char* msg);
+#    endif
 
-    void CYASSL_ERROR(int);
-    void CYASSL_MSG(const char* msg);
+#    ifndef CYASSL_LEAVE
+          void CYASSL_LEAVE(const char* msg, int ret);
+#    endif
+
+#    ifndef CYASSL_ERROR
+          void CYASSL_ERROR(int);
+#    endif
+
+#    ifndef CYASSL_MSG
+          void CYASSL_MSG(const char* msg);
+#    endif
 
 #else /* DEBUG_CYASSL   */
 

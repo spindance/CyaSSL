@@ -99,6 +99,9 @@ void CyaSSL_Debugging_OFF(void)
     int dc_log_printf(char*, ...);
 #endif
 
+
+#ifndef cyassl_log
+
 static void cyassl_log(const int logLevel, const char *const logMessage)
 {
     if (log_function)
@@ -121,15 +124,17 @@ static void cyassl_log(const int logLevel, const char *const logMessage)
         }
     }
 }
+#endif
 
-
+#ifndef CYASSL_MSG
 void CYASSL_MSG(const char* msg)
 {
     if (loggingEnabled)
         cyassl_log(INFO_LOG , msg);
 }
+#endif
 
-
+#ifndef CYASSL_ENTER
 void CYASSL_ENTER(const char* msg)
 {
     if (loggingEnabled) {
@@ -138,8 +143,9 @@ void CYASSL_ENTER(const char* msg)
         cyassl_log(ENTER_LOG , buffer);
     }
 }
+#endif
 
-
+#ifndef CYASSL_LEAVE
 void CYASSL_LEAVE(const char* msg, int ret)
 {
     if (loggingEnabled) {
@@ -148,15 +154,17 @@ void CYASSL_LEAVE(const char* msg, int ret)
         cyassl_log(LEAVE_LOG , buffer);
     }
 }
+#endif
 
-
+#ifndef CYASSL_ERROR
 void CYASSL_ERROR(int error)
 {
     if (loggingEnabled) {
         char buffer[80];
-        sprintf(buffer, "CyaSSL error occured, error = %d", error);
+        sprintf(buffer, "CyaSSL error occurred, error = %d", error);
         cyassl_log(ERROR_LOG , buffer);
     }
 }
+#endif
 
 #endif  /* DEBUG_CYASSL */ 
