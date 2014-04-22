@@ -113,12 +113,17 @@ PROJECT_DIR=$(notdir $(CURDIR))
 # Convention for where the build detritus ends up
 #
 # We build a tree of object files (.o) and dependancy files 
-# in $(TOP_BUILD_DIR).
+# in $(OBJ_DIR).
 #
 # The tree matches the structure of the source tree.
 #
 TOP_BUILD_DIR   = obj/
-BUILD_DIR	= $(TOP_BUILD_DIR)$(PROJECT_DIR)/
+
+ifeq ($(OBJ_DIR),)
+OBJ_DIR=$(TOP_BUILD_DIR)
+endif
+
+BUILD_DIR	= $(OBJ_DIR)$(PROJECT_DIR)/
 
 include makedefs
 
@@ -232,7 +237,7 @@ SEP = '-----------------------------------------------------------------------+-
 
 .PHONY: all
 
-all: obj/cyassl.a
+all: $(OBJ_DIR)cyassl.a
 	@# This line prevents warning when nothing to be done for all.
 
 ifndef MAKECMDGOALS
@@ -262,7 +267,7 @@ alldefconfig randconfig listnewconfig olddefconfig "))
 endif
 endif
 
-obj/cyassl.a: $(OBJS)
+$(OBJ_DIR)cyassl.a: $(OBJS)
 	@echo "+--$(AR) $@"
 	$(Q)$(AR) -rc $@ $^
 
@@ -297,13 +302,14 @@ $(BUILD_DIR)%.d : %.c
 
 .PHONY: clean
 clean :
-ifneq ($(strip $(TOP_BUILD_DIR)),)
+ifneq ($(strip $(OBJ_DIR)),)
 	@echo $(SEP)
 	@echo "+--cyassl library clean"
 	@echo $(SEP)
-	$(RM) -rf $(TOP_BUILD_DIR)*
+	$(RM) -rf obj/*
+	$(RM) -rf mfgObj/*
 else
-	$(Q)echo "TOP_BUILD_DIR is not defined or empty, can't clean."
+	$(Q)echo "OBJ_DIR is not defined or empty, can't clean."
 endif
 
 .PHONY: distclean
