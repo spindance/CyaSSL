@@ -1,6 +1,6 @@
 /* sha.c
  *
- * Copyright (C) 2006-2013 wolfSSL Inc.
+ * Copyright (C) 2006-2014 wolfSSL Inc.
  *
  * This file is part of CyaSSL.
  *
@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 
@@ -26,7 +26,18 @@
 
 #include <cyassl/ctaocrypt/settings.h>
 
-#ifndef NO_SHA
+#if !defined(NO_SHA)
+
+#ifdef CYASSL_PIC32MZ_HASH
+#define InitSha   InitSha_sw
+#define ShaUpdate ShaUpdate_sw
+#define ShaFinal  ShaFinal_sw
+#endif
+
+#ifdef HAVE_FIPS
+    /* set NO_WRAPPERS before headers, use direct internal f()s not wrappers */
+    #define FIPS_NO_WRAPPERS
+#endif
 
 #include <cyassl/ctaocrypt/sha.h>
 #ifdef NO_INLINE
@@ -50,9 +61,9 @@
      * document (See note in README).
      */
     #include "stm32f2xx.h"
-		#include "stm32f2xx_hash.h"
-		
-    void InitSha(Sha* sha)
+    #include "stm32f2xx_hash.h"
+
+    int InitSha(Sha* sha)
     {
         /* STM32F2 struct notes:
          * sha->buffer  = first 4 bytes used to hold partial block if needed 
@@ -73,9 +84,11 @@
 
         /* reset HASH processor */
         HASH->CR |= HASH_CR_INIT;
+
+        return 0;
     }
 
-    void ShaUpdate(Sha* sha, const byte* data, word32 len)
+    int ShaUpdate(Sha* sha, const byte* data, word32 len)
     {
         word32 i = 0;
         word32 fill = 0;
@@ -119,9 +132,11 @@
 
         /* keep track of total data length thus far */ 
         sha->loLen += (len - sha->buffLen);
+
+        return 0;
     }
 
-    void ShaFinal(Sha* sha, byte* hash)
+    int ShaFinal(Sha* sha, byte* hash)
     {
         __IO uint16_t nbvalidbitsdata = 0;
         
@@ -154,7 +169,7 @@
 
         XMEMCPY(hash, sha->digest, SHA_DIGEST_SIZE);
 
-        InitSha(sha);  /* reset state */
+        return InitSha(sha);  /* reset state */
     }
 
 #else /* CTaoCrypt software implementation */
@@ -169,7 +184,7 @@
 #endif /* min */
 
 
-void InitSha(Sha* sha)
+int InitSha(Sha* sha)
 {
     #ifdef FREESCALE_MMCAU
         cau_sha1_initialize_output(sha->digest);
@@ -184,6 +199,8 @@ void InitSha(Sha* sha)
     sha->buffLen = 0;
     sha->loLen   = 0;
     sha->hiLen   = 0;
+
+    return 0;
 }
 
 #ifndef FREESCALE_MMCAU
@@ -296,7 +313,7 @@ static INLINE void AddLength(Sha* sha, word32 len)
 }
 
 
-void ShaUpdate(Sha* sha, const byte* data, word32 len)
+int ShaUpdate(Sha* sha, const byte* data, word32 len)
 {
     /* do block size increments */
     byte* local = (byte*)sha->buffer;
@@ -311,17 +328,19 @@ void ShaUpdate(Sha* sha, const byte* data, word32 len)
 
         if (sha->buffLen == SHA_BLOCK_SIZE) {
             #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU)
-                ByteReverseBytes(local, local, SHA_BLOCK_SIZE);
+                ByteReverseWords(sha->buffer, sha->buffer, SHA_BLOCK_SIZE);
             #endif
             XTRANSFORM(sha, local);
             AddLength(sha, SHA_BLOCK_SIZE);
             sha->buffLen = 0;
         }
     }
+
+    return 0;
 }
 
 
-void ShaFinal(Sha* sha, byte* hash)
+int ShaFinal(Sha* sha, byte* hash)
 {
     byte* local = (byte*)sha->buffer;
 
@@ -335,7 +354,7 @@ void ShaFinal(Sha* sha, byte* hash)
         sha->buffLen += SHA_BLOCK_SIZE - sha->buffLen;
 
         #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU)
-            ByteReverseBytes(local, local, SHA_BLOCK_SIZE);
+            ByteReverseWords(sha->buffer, sha->buffer, SHA_BLOCK_SIZE);
         #endif
         XTRANSFORM(sha, local);
         sha->buffLen = 0;
@@ -349,7 +368,7 @@ void ShaFinal(Sha* sha, byte* hash)
 
     /* store lengths */
     #if defined(LITTLE_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU)
-        ByteReverseBytes(local, local, SHA_BLOCK_SIZE);
+        ByteReverseWords(sha->buffer, sha->buffer, SHA_BLOCK_SIZE);
     #endif
     /* ! length ordering dependent on digest endian type ! */
     XMEMCPY(&local[SHA_PAD_SIZE], &sha->hiLen, sizeof(word32));
@@ -357,8 +376,9 @@ void ShaFinal(Sha* sha, byte* hash)
 
     #ifdef FREESCALE_MMCAU
         /* Kinetis requires only these bytes reversed */
-        ByteReverseBytes(&local[SHA_PAD_SIZE], &local[SHA_PAD_SIZE],
-                2 * sizeof(word32));
+        ByteReverseWords(&sha->buffer[SHA_PAD_SIZE/sizeof(word32)],
+                         &sha->buffer[SHA_PAD_SIZE/sizeof(word32)],
+                         2 * sizeof(word32));
     #endif
 
     XTRANSFORM(sha, local);
@@ -367,7 +387,7 @@ void ShaFinal(Sha* sha, byte* hash)
     #endif
     XMEMCPY(hash, sha->digest, SHA_DIGEST_SIZE);
 
-    InitSha(sha);  /* reset state */
+    return InitSha(sha);  /* reset state */
 }
 
 #endif /* STM32F2_HASH */

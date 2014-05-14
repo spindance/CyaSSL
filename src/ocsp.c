@@ -1,6 +1,6 @@
 /* ocsp.c
  *
- * Copyright (C) 2006-2013 wolfSSL Inc.
+ * Copyright (C) 2006-2014 wolfSSL Inc.
  *
  * This file is part of CyaSSL.
  *
@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 #ifdef HAVE_CONFIG_H
@@ -27,7 +27,7 @@
 
 #ifdef HAVE_OCSP
 
-#include <cyassl/error.h>
+#include <cyassl/error-ssl.h>
 #include <cyassl/ocsp.h>
 #include <cyassl/internal.h>
 
@@ -94,13 +94,10 @@ static int xstat2err(int stat)
     switch (stat) {
         case CERT_GOOD:
             return 0;
-            break;
         case CERT_REVOKED:
             return OCSP_CERT_REVOKED;
-            break;
         default:
             return OCSP_CERT_UNKNOWN;
-            break;
     }
 }
 

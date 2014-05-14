@@ -1,6 +1,6 @@
 /* snifftest.c
  *
- * Copyright (C) 2006-2013 wolfSSL Inc.
+ * Copyright (C) 2006-2014 wolfSSL Inc.
  *
  * This file is part of CyaSSL.
  *
@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 #ifdef HAVE_CONFIG_H
@@ -273,7 +273,7 @@ int main(int argc, char** argv)
         packetNumber++;
         if (packet) {
 
-            byte data[65535];
+            byte data[65535+16384];  /* may have a partial 16k record cached */
 
             if (header.caplen > 40)  { /* min ip(20) + min tcp(20) */
 				packet        += frame;

@@ -1,6 +1,6 @@
 /* md5.c
  *
- * Copyright (C) 2006-2013 wolfSSL Inc.
+ * Copyright (C) 2006-2014 wolfSSL Inc.
  *
  * This file is part of CyaSSL.
  *
@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 
@@ -26,7 +26,13 @@
 
 #include <cyassl/ctaocrypt/settings.h>
 
-#ifndef NO_MD5
+#if !defined(NO_MD5)
+
+#ifdef CYASSL_PIC32MZ_HASH
+#define InitMd5   InitMd5_sw
+#define Md5Update Md5Update_sw
+#define Md5Final  Md5Final_sw
+#endif
 
 #include <cyassl/ctaocrypt/md5.h>
 
@@ -300,7 +306,7 @@ void Md5Update(Md5* md5, const byte* data, word32 len)
 
         if (md5->buffLen == MD5_BLOCK_SIZE) {
             #if defined(BIG_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU)
-                ByteReverseBytes(local, local, MD5_BLOCK_SIZE);
+                ByteReverseWords(md5->buffer, md5->buffer, MD5_BLOCK_SIZE);
             #endif
             XTRANSFORM(md5, local);
             AddLength(md5, MD5_BLOCK_SIZE);
@@ -324,7 +330,7 @@ void Md5Final(Md5* md5, byte* hash)
         md5->buffLen += MD5_BLOCK_SIZE - md5->buffLen;
 
         #if defined(BIG_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU)
-            ByteReverseBytes(local, local, MD5_BLOCK_SIZE);
+            ByteReverseWords(md5->buffer, md5->buffer, MD5_BLOCK_SIZE);
         #endif
         XTRANSFORM(md5, local);
         md5->buffLen = 0;
@@ -338,7 +344,7 @@ void Md5Final(Md5* md5, byte* hash)
 
     /* store lengths */
     #if defined(BIG_ENDIAN_ORDER) && !defined(FREESCALE_MMCAU)
-        ByteReverseBytes(local, local, MD5_BLOCK_SIZE);
+        ByteReverseWords(md5->buffer, md5->buffer, MD5_BLOCK_SIZE);
     #endif
     /* ! length ordering dependent on digest endian type ! */
     XMEMCPY(&local[MD5_PAD_SIZE], &md5->loLen, sizeof(word32));

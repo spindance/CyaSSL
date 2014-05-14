@@ -1,6 +1,6 @@
 /* suites.c
  *
- * Copyright (C) 2006-2013 wolfSSL Inc.
+ * Copyright (C) 2006-2014 wolfSSL Inc.
  *
  * This file is part of CyaSSL.
  *
@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 #ifdef HAVE_CONFIG_H
@@ -36,18 +36,20 @@
 #define MAX_COMMAND_SZ 240
 #define MAX_SUITE_SZ 80 
 #define NOT_BUILT_IN -123
-#define VERSION_TOO_OLD -124
+#ifdef NO_OLD_TLS
+    #define VERSION_TOO_OLD -124
+#endif
 
 #include "examples/client/client.h"
 #include "examples/server/server.h"
 
 
-CYASSL_CTX* cipherSuiteCtx = NULL;
-char nonblockFlag[] = "-N";
-char noVerifyFlag[] = "-d";
-char portFlag[] = "-p";
-char flagSep[] = " ";
-char svrPort[] = "0";
+static CYASSL_CTX* cipherSuiteCtx = NULL;
+static char nonblockFlag[] = "-N";
+static char noVerifyFlag[] = "-d";
+static char portFlag[] = "-p";
+static char flagSep[] = " ";
+static char svrPort[] = "0";
 
 
 #ifdef NO_OLD_TLS

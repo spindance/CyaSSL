@@ -1,6 +1,6 @@
 /* sniffer.c
  *
- * Copyright (C) 2006-2013 wolfSSL Inc.
+ * Copyright (C) 2006-2014 wolfSSL Inc.
  *
  * This file is part of CyaSSL.
  *
@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 
@@ -44,7 +44,7 @@
 
 #include <cyassl/openssl/ssl.h>
 #include <cyassl/internal.h>
-#include <cyassl/error.h>
+#include <cyassl/error-ssl.h>
 #include <cyassl/sniffer.h>
 #include <cyassl/sniffer_error.h>
 
@@ -224,7 +224,8 @@ static const char* const msgTable[] =
     "Bad Finished Message Processing",
     "Bad Compression Type",
     "Bad DeriveKeys Error",
-    "Saw ACK for Missing Packet Error"
+    "Saw ACK for Missing Packet Error",
+    "Bad Decrypt Operation"
 };
 
 
@@ -962,12 +963,13 @@ int ssl_SetPrivateKey(const char* serverAddress, int port, const char* keyFile,
 
 /* Check IP Header for IPV4, TCP, and a registered server address */
 /* returns 0 on success, -1 on error */
-static int CheckIpHdr(IpHdr* iphdr, IpInfo* info, char* error)
+static int CheckIpHdr(IpHdr* iphdr, IpInfo* info, int length, char* error)
 {
     int    version = IP_V(iphdr);
 
     TraceIP(iphdr);
     Trace(IP_CHECK_STR);
+
     if (version != IPV4) {
         SetError(BAD_IPVER_STR, error, NULL, 0); 
         return -1;
@@ -987,6 +989,9 @@ static int CheckIpHdr(IpHdr* iphdr, IpInfo* info, char* error)
     info->total   = ntohs(iphdr->length);
     info->src     = iphdr->src;
     info->dst     = iphdr->dst;
+
+    if (info->total == 0)
+        info->total = length;  /* reassembled may be off */
 
     return 0;
 }
@@ -1039,9 +1044,9 @@ static int ProcessClientKeyExchange(const byte* input, int* sslBytes,
     RsaKey key;
     int    ret;
 
-    InitRsaKey(&key, 0);
-   
-    ret = RsaPrivateKeyDecode(session->context->ctx->privateKey.buffer,
+    ret = InitRsaKey(&key, 0);
+    if (ret == 0) 
+        ret = RsaPrivateKeyDecode(session->context->ctx->privateKey.buffer,
                           &idx, &key, session->context->ctx->privateKey.length);
     if (ret == 0) {
         int length = RsaEncryptSize(&key);
@@ -1138,7 +1143,7 @@ static int ProcessSessionTicket(const byte* input, int* sslBytes,
     input     += TICKET_HINT_LEN;  /* skip over hint */
     *sslBytes -= TICKET_HINT_LEN;
 
-    len = (input[0] << 8) | input[1];
+    len = (word16)((input[0] << 8) | input[1]);
     input     += LENGTH_SZ;
     *sslBytes -= LENGTH_SZ;
 
@@ -1232,8 +1237,10 @@ static int ProcessServerHello(const byte* input, int* sslBytes,
         doResume = 1;
 
     if (session->ticketID && doResume) {
-        /* use ticketID to retrieve from session */
+        /* use ticketID to retrieve from session, prefer over sessionID */
         XMEMCPY(session->sslServer->arrays->sessionID,session->ticketID,ID_LEN);
+        session->sslServer->options.haveSessionId = 1;  /* may not have
+                                                           actual sessionID */
     }
 
     if (doResume ) {
@@ -1345,7 +1352,7 @@ static int ProcessClientHello(const byte* input, int* sslBytes,
         SetError(CLIENT_HELLO_INPUT_STR, error, session, FATAL_ERROR_STATE);
         return -1;
     }
-    len = (input[0] << 8) | input[1];
+    len = (word16)((input[0] << 8) | input[1]);
     input     += SUITE_LEN;
     *sslBytes -= SUITE_LEN;
     /* make sure can read suites + comp len */
@@ -1378,7 +1385,7 @@ static int ProcessClientHello(const byte* input, int* sslBytes,
         SetError(CLIENT_HELLO_INPUT_STR, error, session, FATAL_ERROR_STATE);
         return -1;
     }
-    len = (input[0] << 8) | input[1];
+    len = (word16)((input[0] << 8) | input[1]);
     input     += SUITE_LEN;
     *sslBytes -= SUITE_LEN;
     /* make sure can read through all extensions */
@@ -1396,7 +1403,7 @@ static int ProcessClientHello(const byte* input, int* sslBytes,
         input     += EXT_TYPE_SZ;
         *sslBytes -= EXT_TYPE_SZ;
 
-        extLen = (input[0] << 8) | input[1];
+        extLen = (word16)((input[0] << 8) | input[1]);
         input     += LENGTH_SZ;
         *sslBytes -= LENGTH_SZ;
 
@@ -1438,7 +1445,7 @@ static int ProcessClientHello(const byte* input, int* sslBytes,
 
 
 /* Process Finished */
-static int ProcessFinished(const byte* input, int* sslBytes, 
+static int ProcessFinished(const byte* input, int size, int* sslBytes,
                            SnifferSession* session, char* error)
 {
     SSL*   ssl;
@@ -1449,7 +1456,9 @@ static int ProcessFinished(const byte* input, int* sslBytes,
         ssl = session->sslServer;
     else
         ssl = session->sslClient;
-    ret = DoFinished(ssl, input, &inOutIdx, SNIFF);
+
+    ret = DoFinished(ssl, input, &inOutIdx, (word32) size, (word32) *sslBytes,
+                                                                         SNIFF);
     *sslBytes -= (int)inOutIdx;
 
     if (ret < 0) {
@@ -1527,7 +1536,7 @@ static int DoHandShake(const byte* input, int* sslBytes,
             break;
         case finished:
             Trace(GOT_FINISHED_STR);
-            ret = ProcessFinished(input, sslBytes, session, error);
+            ret = ProcessFinished(input, size, sslBytes, session, error);
             break;
         case client_hello:
             Trace(GOT_CLIENT_HELLO_STR);
@@ -1549,9 +1558,11 @@ static int DoHandShake(const byte* input, int* sslBytes,
 }
 
 
-/* Decrypt input into plain output */
-static void Decrypt(SSL* ssl, byte* output, const byte* input, word32 sz)
+/* Decrypt input into plain output, 0 on success */
+static int Decrypt(SSL* ssl, byte* output, const byte* input, word32 sz)
 {
+    int ret = 0;
+
     switch (ssl->specs.bulk_cipher_algorithm) {
         #ifdef BUILD_ARC4
         case cyassl_rc4:
@@ -1561,13 +1572,13 @@ static void Decrypt(SSL* ssl, byte* output, const byte* input, word32 sz)
             
         #ifdef BUILD_DES3
         case cyassl_triple_des:
-            Des3_CbcDecrypt(ssl->decrypt.des3, output, input, sz);
+            ret = Des3_CbcDecrypt(ssl->decrypt.des3, output, input, sz);
             break;
         #endif
             
         #ifdef BUILD_AES
         case cyassl_aes:
-            AesCbcDecrypt(ssl->decrypt.aes, output, input, sz);
+            ret = AesCbcDecrypt(ssl->decrypt.aes, output, input, sz);
             break;
         #endif
             
@@ -1591,18 +1602,25 @@ static void Decrypt(SSL* ssl, byte* output, const byte* input, word32 sz)
 
         default:
             Trace(BAD_DECRYPT_TYPE);
+            ret = -1;
             break;
     }
+
+    return ret;
 }
 
 
 /* Decrypt input message into output, adjust output steam if needed */
 static const byte* DecryptMessage(SSL* ssl, const byte* input, word32 sz,
-                                  byte* output)
+                                  byte* output, int* error)
 {
     int ivExtra = 0;
 
-    Decrypt(ssl, output, input, sz);
+    int ret = Decrypt(ssl, output, input, sz);
+    if (ret != 0) {
+        *error = ret;
+        return NULL;
+    }
     ssl->keys.encryptSz = sz;
     if (ssl->options.tls1_1 && ssl->specs.cipher_type == block) {
         output += ssl->specs.block_size;     /* go past TLSv1.1 IV */
@@ -1696,8 +1714,8 @@ static SnifferSession* CreateSession(IpInfo* ipInfo, TcpInfo* tcpInfo,
     InitSession(session);
     session->server  = ipInfo->dst;
     session->client  = ipInfo->src;
-    session->srvPort = tcpInfo->dstPort;
-    session->cliPort = tcpInfo->srcPort;
+    session->srvPort = (word16)tcpInfo->dstPort;
+    session->cliPort = (word16)tcpInfo->srcPort;
     session->cliSeqStart = tcpInfo->sequence;
     session->cliExpected = 1;  /* relative */
     session->lastUsed= time(NULL);
@@ -1777,8 +1795,8 @@ static int DoOldHello(SnifferSession* session, const byte* sslFrame,
     }
 
     ret = ProcessOldClientHello(session->sslServer, input, &idx, *sslBytes,
-                                *rhSize);    
-    if (ret < 0) {
+                                (word16)*rhSize);    
+    if (ret < 0 && ret != MATCH_SUITE_ERROR) {
         SetError(BAD_OLD_CLIENT_STR, error, session, FATAL_ERROR_STATE);
         return -1;
     }
@@ -1856,20 +1874,24 @@ static int CheckHeaders(IpInfo* ipInfo, TcpInfo* tcpInfo, const byte* packet,
 {
     TraceHeader();
     TracePacket();
+
+    /* ip header */
     if (length < IP_HDR_SZ) {
         SetError(PACKET_HDR_SHORT_STR, error, NULL, 0);
         return -1;
     }
-    if (CheckIpHdr((IpHdr*)packet, ipInfo, error) != 0)
+    if (CheckIpHdr((IpHdr*)packet, ipInfo, length, error) != 0)
         return -1;
-    
+   
+    /* tcp header */ 
     if (length < (ipInfo->length + TCP_HDR_SZ)) {
         SetError(PACKET_HDR_SHORT_STR, error, NULL, 0);
         return -1;
     }
     if (CheckTcpHdr((TcpHdr*)(packet + ipInfo->length), tcpInfo, error) != 0)
         return -1;
-    
+   
+    /* setup */ 
     *sslFrame = packet + ipInfo->length + tcpInfo->length;
     if (*sslFrame > packet + length) {
         SetError(PACKET_HDR_SHORT_STR, error, NULL, 0);
@@ -2308,12 +2330,17 @@ static int ProcessMessage(const byte* sslFrame, SnifferSession* session,
     RecordLayerHeader rh;
     int               rhSize = 0;
     int               ret;
+    int               errCode = 0;
     int               decoded = 0;      /* bytes stored for user in data */
     int               notEnough;        /* notEnough bytes yet flag */
     SSL*              ssl = (session->flags.side == CYASSL_SERVER_END) ?
                                         session->sslServer : session->sslClient;
 doMessage:
     notEnough = 0;
+    if (sslBytes < 0) {
+        SetError(PACKET_HDR_SHORT_STR, error, session, FATAL_ERROR_STATE);
+        return -1;
+    }
     if (sslBytes >= RECORD_HEADER_SZ) {
         if (GetRecordHeader(sslFrame, &rh, &rhSize) != 0) {
             SetError(BAD_RECORD_HDR_STR, error, session, FATAL_ERROR_STATE);
@@ -2356,7 +2383,11 @@ doMessage:
             return -1;
         }
         sslFrame = DecryptMessage(ssl, sslFrame, rhSize,
-                                  ssl->buffers.outputBuffer.buffer);
+                                  ssl->buffers.outputBuffer.buffer, &errCode);
+        if (errCode != 0) {
+            SetError(BAD_DECRYPT, error, session, FATAL_ERROR_STATE);
+            return -1;
+        }
     }
             
     switch ((enum ContentType)rh.type) {

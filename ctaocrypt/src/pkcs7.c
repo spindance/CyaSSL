@@ -1,6 +1,6 @@
 /* pkcs7.c
  *
- * Copyright (C) 2006-2013 wolfSSL Inc.
+ * Copyright (C) 2006-2014 wolfSSL Inc.
  *
  * This file is part of CyaSSL.
  *
@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 #ifdef HAVE_CONFIG_H
@@ -28,7 +28,7 @@
 #ifdef HAVE_PKCS7
 
 #include <cyassl/ctaocrypt/pkcs7.h>
-#include <cyassl/ctaocrypt/error.h>
+#include <cyassl/ctaocrypt/error-crypt.h>
 #include <cyassl/ctaocrypt/logging.h>
 
 #ifndef min
@@ -328,7 +328,7 @@ int PKCS7_EncodeSignedData(PKCS7* pkcs7, byte* output, word32 outputSz)
     ESD esd;
     word32 signerInfoSz = 0;
     word32 totalSz = 0;
-    int idx = 0;
+    int idx = 0, ret = 0;
     byte* flatSignedAttribs = NULL;
     word32 flatSignedAttribsSz = 0;
     word32 innerOidSz = sizeof(innerOid);
@@ -342,7 +342,9 @@ int PKCS7_EncodeSignedData(PKCS7* pkcs7, byte* output, word32 outputSz)
         return BAD_FUNC_ARG;
 
     XMEMSET(&esd, 0, sizeof(esd));
-    InitSha(&esd.sha);
+    ret = InitSha(&esd.sha);
+    if (ret != 0)
+        return ret;
 
     if (pkcs7->contentSz != 0)
     {
@@ -431,7 +433,11 @@ int PKCS7_EncodeSignedData(PKCS7* pkcs7, byte* output, word32 outputSz)
 
             attribSetSz = SetSet(flatSignedAttribsSz, attribSet);
 
-            InitSha(&esd.sha);
+            ret = InitSha(&esd.sha);
+            if (ret < 0) {
+                XFREE(flatSignedAttribs, 0, NULL);
+                return ret;
+            }
             ShaUpdate(&esd.sha, attribSet, attribSetSz);
             ShaUpdate(&esd.sha, flatSignedAttribs, flatSignedAttribsSz);
         }
@@ -452,9 +458,10 @@ int PKCS7_EncodeSignedData(PKCS7* pkcs7, byte* output, word32 outputSz)
         XMEMCPY(digestInfo + digIdx, esd.contentAttribsDigest, SHA_DIGEST_SIZE);
         digIdx += SHA_DIGEST_SIZE;
 
-        InitRsaKey(&privKey, NULL);
-        result = RsaPrivateKeyDecode(pkcs7->privateKey, &scratch, &privKey,
-                               pkcs7->privateKeySz);
+        result = InitRsaKey(&privKey, NULL);
+        if (result == 0)
+            result = RsaPrivateKeyDecode(pkcs7->privateKey, &scratch, &privKey,
+                                         pkcs7->privateKeySz);
         if (result < 0) {
             XFREE(flatSignedAttribs, 0, NULL);
             return PUBLIC_KEY_E;
@@ -574,15 +581,11 @@ int PKCS7_EncodeSignedData(PKCS7* pkcs7, byte* output, word32 outputSz)
 int PKCS7_VerifySignedData(PKCS7* pkcs7, byte* pkiMsg, word32 pkiMsgSz)
 {
     word32 idx, contentType;
-    int length, version;
+    int length, version, ret;
     byte* content = NULL;
     byte* sig = NULL;
     byte* cert = NULL;
-    byte* signedAttr = NULL;
-    int contentSz = 0, sigSz = 0, certSz = 0, signedAttrSz = 0;
-
-    (void)signedAttr;    /* not used yet, just set */
-    (void)signedAttrSz;
+    int contentSz = 0, sigSz = 0, certSz = 0;
 
     if (pkcs7 == NULL || pkiMsg == NULL || pkiMsgSz == 0)
         return BAD_FUNC_ARG;
@@ -743,10 +746,6 @@ int PKCS7_VerifySignedData(PKCS7* pkcs7, byte* pkiMsg, word32 pkiMsgSz)
             if (GetLength(pkiMsg, &idx, &length, pkiMsgSz) < 0)
                 return ASN_PARSE_E;
 
-            /* save pointer and length */
-            signedAttr = &pkiMsg[idx];
-            signedAttrSz = length;
-
             idx += length;
         }
 
@@ -775,7 +774,8 @@ int PKCS7_VerifySignedData(PKCS7* pkcs7, byte* pkiMsg, word32 pkiMsgSz)
         pkcs7->content = content;
         pkcs7->contentSz = contentSz;
 
-        InitRsaKey(&key, NULL);
+        ret = InitRsaKey(&key, NULL);
+        if (ret != 0) return ret;
         if (RsaPublicKeyDecode(pkcs7->publicKey, &scratch, &key,
                                pkcs7->publicKeySz) < 0) {
             CYASSL_MSG("ASN RSA key decode error");
@@ -853,7 +853,8 @@ CYASSL_LOCAL int CreateRecipientInfo(const byte* cert, word32 certSz,
         return BAD_FUNC_ARG;
 
     /* EncryptedKey */
-    InitRsaKey(&pubKey, 0);
+    ret = InitRsaKey(&pubKey, 0);
+    if (ret != 0) return ret;
     if (RsaPublicKeyDecode(decoded.publicKey, &idx, &pubKey,
                            decoded.pubKeySize) < 0) {
         CYASSL_MSG("ASN RSA key decode error");
@@ -909,7 +910,7 @@ CYASSL_LOCAL int CreateRecipientInfo(const byte* cert, word32 certSz,
 /* build PKCS#7 envelopedData content type, return enveloped size */
 int PKCS7_EncodeEnvelopedData(PKCS7* pkcs7, byte* output, word32 outputSz)
 {
-    int i, idx = 0;
+    int i, ret = 0, idx = 0;
     int totalSz = 0, padSz = 0, desOutSz = 0;
 
     int contentInfoSeqSz, outerContentTypeSz, outerContentSz;
@@ -971,8 +972,13 @@ int PKCS7_EncodeEnvelopedData(PKCS7* pkcs7, byte* output, word32 outputSz)
     verSz = SetMyVersion(0, ver, 0);
 
     /* generate random content encryption key */
-    InitRng(&rng);
-    RNG_GenerateBlock(&rng, contentKeyPlain, blockKeySz);
+    ret = InitRng(&rng);
+    if (ret != 0)
+        return ret;
+
+    ret = RNG_GenerateBlock(&rng, contentKeyPlain, blockKeySz);
+    if (ret != 0)
+        return ret;
 
     /* build RecipientInfo, only handle 1 for now */
     recipSz = CreateRecipientInfo(pkcs7->singleCert, pkcs7->singleCertSz, RSAk,
@@ -985,6 +991,11 @@ int PKCS7_EncodeEnvelopedData(PKCS7* pkcs7, byte* output, word32 outputSz)
         return recipSz;
     }
     recipSetSz = SetSet(recipSz, recipSet);
+
+    /* generate IV for block cipher */
+    ret = RNG_GenerateBlock(&rng, tmpIv, DES_BLOCK_SIZE);
+    if (ret != 0)
+        return ret;
 
     /* EncryptedContentInfo */
     contentTypeSz = SetContentType(pkcs7->contentOID, contentType);
@@ -1019,9 +1030,6 @@ int PKCS7_EncodeEnvelopedData(PKCS7* pkcs7, byte* output, word32 outputSz)
         return MEMORY_E;
     }
 
-    /* generate IV for block cipher */
-    RNG_GenerateBlock(&rng, tmpIv, DES_BLOCK_SIZE);
-
     /* put together IV OCTET STRING */
     ivOctetStringSz = SetOctetString(DES_BLOCK_SIZE, ivOctetString);
 
@@ -1035,13 +1043,33 @@ int PKCS7_EncodeEnvelopedData(PKCS7* pkcs7, byte* output, word32 outputSz)
     /* encrypt content */
     if (pkcs7->encryptOID == DESb) {
         Des des;
-        Des_SetKey(&des, contentKeyPlain, tmpIv, DES_ENCRYPTION);
-        Des_CbcEncrypt(&des, encryptedContent, plain, desOutSz);
 
-    } else if (pkcs7->encryptOID == DES3b) {
+        ret = Des_SetKey(&des, contentKeyPlain, tmpIv, DES_ENCRYPTION);
+
+        if (ret == 0)
+            Des_CbcEncrypt(&des, encryptedContent, plain, desOutSz);
+
+        if (ret != 0) {
+            XFREE(encryptedContent, NULL, DYNAMIC_TYPE_TMP_BUFFER);
+            if (dynamicFlag)
+                XFREE(plain, NULL, DYNAMIC_TYPE_TMP_BUFFER);
+            return ret;
+        }
+    }
+    else if (pkcs7->encryptOID == DES3b) {
         Des3 des3;
-        Des3_SetKey(&des3, contentKeyPlain, tmpIv, DES_ENCRYPTION);
-        Des3_CbcEncrypt(&des3, encryptedContent, plain, desOutSz);
+
+        ret = Des3_SetKey(&des3, contentKeyPlain, tmpIv, DES_ENCRYPTION);
+
+        if (ret == 0)
+            ret = Des3_CbcEncrypt(&des3, encryptedContent, plain, desOutSz);
+
+        if (ret != 0) {
+            XFREE(encryptedContent, NULL, DYNAMIC_TYPE_TMP_BUFFER);
+            if (dynamicFlag)
+                XFREE(plain, NULL, DYNAMIC_TYPE_TMP_BUFFER);
+            return ret;
+        }
     }
 
     encContentOctetSz = SetImplicit(ASN_OCTET_STRING, 0,
@@ -1152,7 +1180,8 @@ CYASSL_API int PKCS7_DecodeEnvelopedData(PKCS7* pkcs7, byte* pkiMsg,
         return BAD_FUNC_ARG;
 
     /* load private key */
-    InitRsaKey(&privKey, 0);
+    ret = InitRsaKey(&privKey, 0);
+    if (ret != 0) return ret;
     ret = RsaPrivateKeyDecode(pkcs7->privateKey, &idx, &privKey,
                               pkcs7->privateKeySz);
     if (ret != 0) {
@@ -1308,14 +1337,28 @@ CYASSL_API int PKCS7_DecodeEnvelopedData(PKCS7* pkcs7, byte* pkiMsg,
     /* decrypt encryptedContent */
     if (encOID == DESb) {
         Des des;
-        Des_SetKey(&des, decryptedKey, tmpIv, DES_DECRYPTION);
-        Des_CbcDecrypt(&des, encryptedContent, encryptedContent,
-                       encryptedContentSz);
-    } else if (encOID == DES3b) {
+        ret = Des_SetKey(&des, decryptedKey, tmpIv, DES_DECRYPTION);
+
+        if (ret == 0)
+            Des_CbcDecrypt(&des, encryptedContent, encryptedContent,
+                                 encryptedContentSz);
+
+        if (ret != 0) {
+            XFREE(encryptedContent, NULL, DYNAMIC_TYPE_TMP_BUFFER);
+            return ret;
+        }
+    }
+    else if (encOID == DES3b) {
         Des3 des;
-        Des3_SetKey(&des, decryptedKey, tmpIv, DES_DECRYPTION);
-        Des3_CbcDecrypt(&des, encryptedContent, encryptedContent,
-                       encryptedContentSz);
+        ret = Des3_SetKey(&des, decryptedKey, tmpIv, DES_DECRYPTION);
+        if (ret == 0)
+            ret = Des3_CbcDecrypt(&des, encryptedContent, encryptedContent,
+                                  encryptedContentSz);
+
+        if (ret != 0) {
+            XFREE(encryptedContent, NULL, DYNAMIC_TYPE_TMP_BUFFER);
+            return ret;
+        }
     } else {
         CYASSL_MSG("Unsupported content encryption OID type");
         return ALGO_ID_E;

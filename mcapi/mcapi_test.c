@@ -1,6 +1,6 @@
 /* test.c
  *
- * Copyright (C) 2006-2013 wolfSSL Inc.
+ * Copyright (C) 2006-2014 wolfSSL Inc.
  *
  * This file is part of CyaSSL.
  *
@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 
@@ -240,11 +240,16 @@ static int check_sha(void)
 {
     CRYPT_SHA_CTX mcSha;
     Sha           defSha;
+    int           ret = 0;
     byte          mcDigest[CRYPT_SHA_DIGEST_SIZE];
     byte          defDigest[SHA_DIGEST_SIZE];
 
     CRYPT_SHA_Initialize(&mcSha);
-    InitSha(&defSha);
+    ret = InitSha(&defSha);
+    if (ret != 0) {
+        printf("sha init default failed\n");
+        return -1;
+    }
 
     CRYPT_SHA_DataAdd(&mcSha, ourData, OUR_DATA_SIZE);
     ShaUpdate(&defSha, ourData, OUR_DATA_SIZE);
@@ -253,7 +258,7 @@ static int check_sha(void)
     ShaFinal(&defSha, defDigest);
 
     if (memcmp(mcDigest, defDigest, CRYPT_SHA_DIGEST_SIZE) != 0) {
-        printf("sha final memcmp fialed\n");
+        printf("sha final memcmp failed\n");
         return -1;
     } 
     printf("sha         mcapi test passed\n");
@@ -267,17 +272,30 @@ static int check_sha256(void)
 {
     CRYPT_SHA256_CTX mcSha256;
     Sha256           defSha256;
+    int              ret;
     byte             mcDigest[CRYPT_SHA256_DIGEST_SIZE];
     byte             defDigest[SHA256_DIGEST_SIZE];
 
     CRYPT_SHA256_Initialize(&mcSha256);
-    InitSha256(&defSha256);
+    ret = InitSha256(&defSha256);
+    if (ret != 0) {
+        printf("sha256 init default failed\n");
+        return -1;
+    }
 
     CRYPT_SHA256_DataAdd(&mcSha256, ourData, OUR_DATA_SIZE);
-    Sha256Update(&defSha256, ourData, OUR_DATA_SIZE);
+    ret = Sha256Update(&defSha256, ourData, OUR_DATA_SIZE);
+    if (ret != 0) {
+        printf("sha256 update default failed\n");
+        return -1;
+    }
 
     CRYPT_SHA256_Finalize(&mcSha256, mcDigest);
-    Sha256Final(&defSha256, defDigest);
+    ret = Sha256Final(&defSha256, defDigest);
+    if (ret != 0) {
+        printf("sha256 final default failed\n");
+        return -1;
+    }
 
     if (memcmp(mcDigest, defDigest, CRYPT_SHA256_DIGEST_SIZE) != 0) {
         printf("sha256 final memcmp fialed\n");
@@ -294,17 +312,30 @@ static int check_sha384(void)
 {
     CRYPT_SHA384_CTX mcSha384;
     Sha384           defSha384;
+    int              ret;
     byte             mcDigest[CRYPT_SHA384_DIGEST_SIZE];
     byte             defDigest[SHA384_DIGEST_SIZE];
 
     CRYPT_SHA384_Initialize(&mcSha384);
-    InitSha384(&defSha384);
+    ret = InitSha384(&defSha384);
+    if (ret != 0) {
+        printf("sha384 init default failed\n");
+        return -1;
+    }
 
     CRYPT_SHA384_DataAdd(&mcSha384, ourData, OUR_DATA_SIZE);
-    Sha384Update(&defSha384, ourData, OUR_DATA_SIZE);
+    ret = Sha384Update(&defSha384, ourData, OUR_DATA_SIZE);
+    if (ret != 0) {
+        printf("sha384 update default failed\n");
+        return -1;
+    }
 
     CRYPT_SHA384_Finalize(&mcSha384, mcDigest);
-    Sha384Final(&defSha384, defDigest);
+    ret = Sha384Final(&defSha384, defDigest);
+    if (ret != 0) {
+        printf("sha384 final default failed\n");
+        return -1;
+    }
 
     if (memcmp(mcDigest, defDigest, CRYPT_SHA384_DIGEST_SIZE) != 0) {
         printf("sha384 final memcmp fialed\n");
@@ -321,17 +352,30 @@ static int check_sha512(void)
 {
     CRYPT_SHA512_CTX mcSha512;
     Sha512           defSha512;
+    int              ret;
     byte             mcDigest[CRYPT_SHA512_DIGEST_SIZE];
     byte             defDigest[SHA512_DIGEST_SIZE];
 
     CRYPT_SHA512_Initialize(&mcSha512);
-    InitSha512(&defSha512);
+    ret = InitSha512(&defSha512);
+    if (ret != 0) {
+        printf("sha512 init default failed\n");
+        return -1;
+    }
 
     CRYPT_SHA512_DataAdd(&mcSha512, ourData, OUR_DATA_SIZE);
-    Sha512Update(&defSha512, ourData, OUR_DATA_SIZE);
+    ret = Sha512Update(&defSha512, ourData, OUR_DATA_SIZE);
+    if (ret != 0) {
+        printf("sha512 update default failed\n");
+        return -1;
+    }
 
     CRYPT_SHA512_Finalize(&mcSha512, mcDigest);
-    Sha512Final(&defSha512, defDigest);
+    ret = Sha512Final(&defSha512, defDigest);
+    if (ret != 0) {
+        printf("sha512 final default failed\n");
+        return -1;
+    }
 
     if (memcmp(mcDigest, defDigest, CRYPT_SHA512_DIGEST_SIZE) != 0) {
         printf("sha512 final memcmp fialed\n");
@@ -348,6 +392,7 @@ static int check_hmac(void)
 {
     CRYPT_HMAC_CTX mcHmac;
     Hmac           defHmac;
+    int            ret;
     byte           mcDigest[CRYPT_SHA512_DIGEST_SIZE];
     byte           defDigest[SHA512_DIGEST_SIZE];
 
@@ -355,13 +400,25 @@ static int check_hmac(void)
 
     /* SHA1 */
     CRYPT_HMAC_SetKey(&mcHmac, CRYPT_HMAC_SHA, key, 4);
-    HmacSetKey(&defHmac, SHA, key, 4);
+    ret = HmacSetKey(&defHmac, SHA, key, 4);
+    if (ret != 0) {
+        printf("hmac sha setkey default failed\n");
+        return -1;
+    }
 
     CRYPT_HMAC_DataAdd(&mcHmac, ourData, OUR_DATA_SIZE);
-    HmacUpdate(&defHmac, ourData, OUR_DATA_SIZE);
+    ret = HmacUpdate(&defHmac, ourData, OUR_DATA_SIZE);
+    if (ret != 0) {
+        printf("hmac sha update default failed\n");
+        return -1;
+    }
 
     CRYPT_HMAC_Finalize(&mcHmac, mcDigest);
-    HmacFinal(&defHmac, defDigest);
+    ret = HmacFinal(&defHmac, defDigest);
+    if (ret != 0) {
+        printf("hmac sha final default failed\n");
+        return -1;
+    }
 
     if (memcmp(mcDigest, defDigest, CRYPT_SHA_DIGEST_SIZE) != 0) {
         printf("hmac sha final memcmp fialed\n");
@@ -371,13 +428,25 @@ static int check_hmac(void)
 
     /* SHA-256 */
     CRYPT_HMAC_SetKey(&mcHmac, CRYPT_HMAC_SHA256, key, 4);
-    HmacSetKey(&defHmac, SHA256, key, 4);
+    ret = HmacSetKey(&defHmac, SHA256, key, 4);
+    if (ret != 0) {
+        printf("hmac sha256 setkey default failed\n");
+        return -1;
+    }
 
     CRYPT_HMAC_DataAdd(&mcHmac, ourData, OUR_DATA_SIZE);
-    HmacUpdate(&defHmac, ourData, OUR_DATA_SIZE);
+    ret = HmacUpdate(&defHmac, ourData, OUR_DATA_SIZE);
+    if (ret != 0) {
+        printf("hmac sha256 update default failed\n");
+        return -1;
+    }
 
     CRYPT_HMAC_Finalize(&mcHmac, mcDigest);
-    HmacFinal(&defHmac, defDigest);
+    ret = HmacFinal(&defHmac, defDigest);
+    if (ret != 0) {
+        printf("hmac sha256 final default failed\n");
+        return -1;
+    }
 
     if (memcmp(mcDigest, defDigest, CRYPT_SHA256_DIGEST_SIZE) != 0) {
         printf("hmac sha256 final memcmp fialed\n");
@@ -387,13 +456,25 @@ static int check_hmac(void)
 
     /* SHA-384 */
     CRYPT_HMAC_SetKey(&mcHmac, CRYPT_HMAC_SHA384, key, 4);
-    HmacSetKey(&defHmac, SHA384, key, 4);
+    ret = HmacSetKey(&defHmac, SHA384, key, 4);
+    if (ret != 0) {
+        printf("hmac sha384 setkey default failed\n");
+        return -1;
+    }
 
     CRYPT_HMAC_DataAdd(&mcHmac, ourData, OUR_DATA_SIZE);
-    HmacUpdate(&defHmac, ourData, OUR_DATA_SIZE);
+    ret = HmacUpdate(&defHmac, ourData, OUR_DATA_SIZE);
+    if (ret != 0) {
+        printf("hmac sha384 update default failed\n");
+        return -1;
+    }
 
     CRYPT_HMAC_Finalize(&mcHmac, mcDigest);
-    HmacFinal(&defHmac, defDigest);
+    ret = HmacFinal(&defHmac, defDigest);
+    if (ret != 0) {
+        printf("hmac sha384 final default failed\n");
+        return -1;
+    }
 
     if (memcmp(mcDigest, defDigest, CRYPT_SHA384_DIGEST_SIZE) != 0) {
         printf("hmac sha384 final memcmp fialed\n");
@@ -403,13 +484,25 @@ static int check_hmac(void)
 
     /* SHA-512 */
     CRYPT_HMAC_SetKey(&mcHmac, CRYPT_HMAC_SHA512, key, 4);
-    HmacSetKey(&defHmac, SHA512, key, 4);
+    ret = HmacSetKey(&defHmac, SHA512, key, 4);
+    if (ret != 0) {
+        printf("hmac sha512 setkey default failed\n");
+        return -1;
+    }
 
     CRYPT_HMAC_DataAdd(&mcHmac, ourData, OUR_DATA_SIZE);
-    HmacUpdate(&defHmac, ourData, OUR_DATA_SIZE);
+    ret = HmacUpdate(&defHmac, ourData, OUR_DATA_SIZE);
+    if (ret != 0) {
+        printf("hmac sha512 update default failed\n");
+        return -1;
+    }
 
     CRYPT_HMAC_Finalize(&mcHmac, mcDigest);
-    HmacFinal(&defHmac, defDigest);
+    ret = HmacFinal(&defHmac, defDigest);
+    if (ret != 0) {
+        printf("hmac sha512 final default failed\n");
+        return -1;
+    }
 
     if (memcmp(mcDigest, defDigest, CRYPT_SHA512_DIGEST_SIZE) != 0) {
         printf("hmac sha512 final memcmp fialed\n");
@@ -592,14 +685,22 @@ static int check_des3(void)
         printf("mcapi tdes key set failed\n");
         return -1;
     }
-    Des3_SetKey(&defDes3, key, iv, DES_ENCRYPTION);
+    ret = Des3_SetKey(&defDes3, key, iv, DES_ENCRYPTION);
+    if (ret != 0) {
+        printf("default des3 key set failed\n");
+        return -1;
+    }
 
     ret = CRYPT_TDES_CBC_Encrypt(&mcDes3, out1, ourData, TDES_TEST_SIZE);
     if (ret != 0) {
         printf("mcapi tdes cbc encrypt failed\n");
         return -1;
     }
-    Des3_CbcEncrypt(&defDes3, out2, ourData, TDES_TEST_SIZE);
+    ret = Des3_CbcEncrypt(&defDes3, out2, ourData, TDES_TEST_SIZE);
+    if (ret != 0) {
+        printf("mcapi default tdes cbc encrypt failed\n");
+        return -1;
+    }
 
     if (memcmp(out1, out2, TDES_TEST_SIZE) != 0) {
         printf("mcapi tdes cbc encrypt cmp failed\n");
@@ -612,14 +713,22 @@ static int check_des3(void)
         printf("mcapi tdes key set failed\n");
         return -1;
     }
-    Des3_SetKey(&defDes3, key, iv, DES_DECRYPTION);
+    ret = Des3_SetKey(&defDes3, key, iv, DES_DECRYPTION);
+    if (ret != 0) {
+        printf("default des3 key set failed\n");
+        return -1;
+    }
 
     ret = CRYPT_TDES_CBC_Decrypt(&mcDes3, out2, out1, TDES_TEST_SIZE);
     if (ret != 0) {
         printf("mcapi tdes cbc decrypt failed\n");
         return -1;
     }
-    Des3_CbcDecrypt(&defDes3, out1, out1, TDES_TEST_SIZE);
+    ret = Des3_CbcDecrypt(&defDes3, out1, out1, TDES_TEST_SIZE);
+    if (ret != 0) {
+        printf("mcapi default tdes cbc decrypt failed\n");
+        return -1;
+    }
 
     if (memcmp(out1, out2, TDES_TEST_SIZE) != 0) {
         printf("mcapi tdes cbc decrypt cmp failed\n");
@@ -1166,8 +1275,9 @@ static int check_rsa(void)
     byte          out1[256];
     byte          out2[256];
 
-    InitRsaKey(&defRsa, NULL);
-    ret = CRYPT_RSA_Initialize(&mcRsa);
+    ret = InitRsaKey(&defRsa, NULL);
+    if (ret == 0)
+        ret = CRYPT_RSA_Initialize(&mcRsa);
     if (ret != 0) {
         printf("mcapi rsa init failed\n");
         return -1;

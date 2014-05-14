@@ -1,6 +1,6 @@
 /* keys.c
  *
- * Copyright (C) 2006-2013 wolfSSL Inc.
+ * Copyright (C) 2006-2014 wolfSSL Inc.
  *
  * This file is part of CyaSSL.
  *
@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 
@@ -27,7 +27,7 @@
 #include <cyassl/ctaocrypt/settings.h>
 
 #include <cyassl/internal.h>
-#include <cyassl/error.h>
+#include <cyassl/error-ssl.h>
 #ifdef SHOW_SECRETS
     #ifdef FREESCALE_MQX
         #include <fio.h>
@@ -39,6 +39,13 @@
 
 int SetCipherSpecs(CYASSL* ssl)
 {
+    if (ssl->options.side == CYASSL_CLIENT_END) {
+        /* server side verified before SetCipherSpecs call */
+        if (VerifyClientSuite(ssl) != 1) {
+            CYASSL_MSG("SetCipherSpecs() client has an unusuable suite");
+            return UNSUPPORTED_SUITE;
+        }
+    }
     /* ECC extensions, or AES-CCM */
     if (ssl->options.cipherSuite0 == ECC_BYTE) {
     
@@ -1575,6 +1582,8 @@ static int SetKeys(Ciphers* enc, Ciphers* dec, Keys* keys, CipherSpecs* specs,
     
 #ifdef BUILD_DES3
     if (specs->bulk_cipher_algorithm == cyassl_triple_des) {
+        int desRet = 0;
+
         if (enc->des3 == NULL)
             enc->des3 = (Des3*)XMALLOC(sizeof(Des3), heap, DYNAMIC_TYPE_CIPHER);
         if (enc->des3 == NULL)
@@ -1596,16 +1605,24 @@ static int SetKeys(Ciphers* enc, Ciphers* dec, Keys* keys, CipherSpecs* specs,
         }
 #endif
         if (side == CYASSL_CLIENT_END) {
-            Des3_SetKey(enc->des3, keys->client_write_key,
+            desRet = Des3_SetKey(enc->des3, keys->client_write_key,
                         keys->client_write_IV, DES_ENCRYPTION);
-            Des3_SetKey(dec->des3, keys->server_write_key,
+            if (desRet != 0)
+                return desRet;
+            desRet = Des3_SetKey(dec->des3, keys->server_write_key,
                         keys->server_write_IV, DES_DECRYPTION);
+            if (desRet != 0)
+                return desRet;
         }
         else {
-            Des3_SetKey(enc->des3, keys->server_write_key,
+            desRet = Des3_SetKey(enc->des3, keys->server_write_key,
                         keys->server_write_IV, DES_ENCRYPTION);
-            Des3_SetKey(dec->des3, keys->client_write_key,
+            if (desRet != 0)
+                return desRet;
+            desRet = Des3_SetKey(dec->des3, keys->client_write_key,
                 keys->client_write_IV, DES_DECRYPTION);
+            if (desRet != 0)
+                return desRet;
         }
         enc->setup = 1;
         dec->setup = 1;
@@ -1614,6 +1631,8 @@ static int SetKeys(Ciphers* enc, Ciphers* dec, Keys* keys, CipherSpecs* specs,
 
 #ifdef BUILD_AES
     if (specs->bulk_cipher_algorithm == cyassl_aes) {
+        int aesRet = 0;
+
         if (enc->aes == NULL)
             enc->aes = (Aes*)XMALLOC(sizeof(Aes), heap, DYNAMIC_TYPE_CIPHER);
         if (enc->aes == NULL)
@@ -1635,20 +1654,28 @@ static int SetKeys(Ciphers* enc, Ciphers* dec, Keys* keys, CipherSpecs* specs,
         }
 #endif
         if (side == CYASSL_CLIENT_END) {
-            AesSetKey(enc->aes, keys->client_write_key,
-                      specs->key_size, keys->client_write_IV,
-                      AES_ENCRYPTION);
-            AesSetKey(dec->aes, keys->server_write_key,
-                      specs->key_size, keys->server_write_IV,
-                      AES_DECRYPTION);
+            aesRet = AesSetKey(enc->aes, keys->client_write_key,
+                               specs->key_size, keys->client_write_IV,
+                               AES_ENCRYPTION);
+            if (aesRet != 0)
+                return aesRet;
+            aesRet = AesSetKey(dec->aes, keys->server_write_key,
+                               specs->key_size, keys->server_write_IV,
+                               AES_DECRYPTION);
+            if (aesRet != 0)
+                return aesRet;
         }
         else {
-            AesSetKey(enc->aes, keys->server_write_key,
-                      specs->key_size, keys->server_write_IV,
-                      AES_ENCRYPTION);
-            AesSetKey(dec->aes, keys->client_write_key,
-                      specs->key_size, keys->client_write_IV,
-                      AES_DECRYPTION);
+            aesRet = AesSetKey(enc->aes, keys->server_write_key,
+                               specs->key_size, keys->server_write_IV,
+                               AES_ENCRYPTION);
+            if (aesRet != 0)
+                return aesRet;
+            aesRet = AesSetKey(dec->aes, keys->client_write_key,
+                               specs->key_size, keys->client_write_IV,
+                               AES_DECRYPTION);
+            if (aesRet != 0)
+                return aesRet;
         }
         enc->setup = 1;
         dec->setup = 1;
@@ -1721,27 +1748,41 @@ static int SetKeys(Ciphers* enc, Ciphers* dec, Keys* keys, CipherSpecs* specs,
 
 #ifdef HAVE_CAMELLIA
     if (specs->bulk_cipher_algorithm == cyassl_camellia) {
+        int camRet;
+
         if (enc->cam == NULL)
             enc->cam =
                 (Camellia*)XMALLOC(sizeof(Camellia), heap, DYNAMIC_TYPE_CIPHER);
         if (enc->cam == NULL)
             return MEMORY_E;
+
         if (dec->cam == NULL)
             dec->cam =
                 (Camellia*)XMALLOC(sizeof(Camellia), heap, DYNAMIC_TYPE_CIPHER);
         if (dec->cam == NULL)
             return MEMORY_E;
+
         if (side == CYASSL_CLIENT_END) {
-            CamelliaSetKey(enc->cam, keys->client_write_key,
+            camRet = CamelliaSetKey(enc->cam, keys->client_write_key,
                       specs->key_size, keys->client_write_IV);
-            CamelliaSetKey(dec->cam, keys->server_write_key,
+            if (camRet != 0)
+                return camRet;
+
+            camRet = CamelliaSetKey(dec->cam, keys->server_write_key,
                       specs->key_size, keys->server_write_IV);
+            if (camRet != 0)
+                return camRet;
         }
         else {
-            CamelliaSetKey(enc->cam, keys->server_write_key,
+            camRet = CamelliaSetKey(enc->cam, keys->server_write_key,
                       specs->key_size, keys->server_write_IV);
-            CamelliaSetKey(dec->cam, keys->client_write_key,
+            if (camRet != 0)
+                return camRet;
+
+            camRet = CamelliaSetKey(dec->cam, keys->client_write_key,
                       specs->key_size, keys->client_write_IV);
+            if (camRet != 0)
+                return camRet;
         }
         enc->setup = 1;
         dec->setup = 1;
@@ -1815,6 +1856,7 @@ int DeriveKeys(CYASSL* ssl)
                  2 * ssl->specs.key_size  +
                  2 * ssl->specs.iv_size;
     int rounds = (length + MD5_DIGEST_SIZE - 1 ) / MD5_DIGEST_SIZE, i;
+    int ret = 0;
 
     byte shaOutput[SHA_DIGEST_SIZE];
     byte md5Input[SECRET_LEN + SHA_DIGEST_SIZE];
@@ -1826,7 +1868,9 @@ int DeriveKeys(CYASSL* ssl)
     byte keyData[KEY_PREFIX * MD5_DIGEST_SIZE];  /* max size */
 
     InitMd5(&md5);
-    InitSha(&sha);
+    ret = InitSha(&sha);
+    if (ret != 0) 
+        return ret;
 
     XMEMCPY(md5Input, ssl->arrays->masterSecret, SECRET_LEN);
 
@@ -1856,18 +1900,21 @@ int DeriveKeys(CYASSL* ssl)
 }
 
 
-static void CleanPreMaster(CYASSL* ssl)
+static int CleanPreMaster(CYASSL* ssl)
 {
-    int i, sz = ssl->arrays->preMasterSz;
+    int i, ret, sz = ssl->arrays->preMasterSz;
 
     for (i = 0; i < sz; i++)
         ssl->arrays->preMasterSecret[i] = 0;
 
-    RNG_GenerateBlock(ssl->rng, ssl->arrays->preMasterSecret, sz);
+    ret = RNG_GenerateBlock(ssl->rng, ssl->arrays->preMasterSecret, sz);
+    if (ret != 0)
+        return ret;
 
     for (i = 0; i < sz; i++)
         ssl->arrays->preMasterSecret[i] = 0;
 
+    return 0;
 }
 
 
@@ -1895,7 +1942,9 @@ static int MakeSslMasterSecret(CYASSL* ssl)
 #endif
 
     InitMd5(&md5);
-    InitSha(&sha);
+    ret = InitSha(&sha);
+    if (ret != 0) 
+        return ret;
 
     XMEMCPY(md5Input, ssl->arrays->preMasterSecret, pmsSz);
 
@@ -1936,9 +1985,13 @@ static int MakeSslMasterSecret(CYASSL* ssl)
 #endif
 
     ret = DeriveKeys(ssl);
-    CleanPreMaster(ssl);
+    if (ret != 0) {
+        /* always try to clean PreMaster */
+        CleanPreMaster(ssl);
+        return ret;
+    }
 
-    return ret;
+    return CleanPreMaster(ssl);
 }
 #endif
 

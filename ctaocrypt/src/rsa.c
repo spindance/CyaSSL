@@ -1,6 +1,6 @@
 /* rsa.c
  *
- * Copyright (C) 2006-2013 wolfSSL Inc.
+ * Copyright (C) 2006-2014 wolfSSL Inc.
  *
  * This file is part of CyaSSL.
  *
@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 
@@ -28,9 +28,14 @@
 
 #ifndef NO_RSA
 
+#ifdef HAVE_FIPS
+    /* set NO_WRAPPERS before headers, use direct internal f()s not wrappers */
+    #define FIPS_NO_WRAPPERS
+#endif
+
 #include <cyassl/ctaocrypt/rsa.h>
 #include <cyassl/ctaocrypt/random.h>
-#include <cyassl/ctaocrypt/error.h>
+#include <cyassl/ctaocrypt/error-crypt.h>
 #include <cyassl/ctaocrypt/logging.h>
 
 #ifdef SHOW_GEN
@@ -42,8 +47,8 @@
 #endif
 
 #ifdef HAVE_CAVIUM
-    static void InitCaviumRsaKey(RsaKey* key, void* heap);
-    static void FreeCaviumRsaKey(RsaKey* key);
+    static int  InitCaviumRsaKey(RsaKey* key, void* heap);
+    static int  FreeCaviumRsaKey(RsaKey* key);
     static int  CaviumRsaPublicEncrypt(const byte* in, word32 inLen, byte* out,
                                        word32 outLen, RsaKey* key);
     static int  CaviumRsaPrivateDecrypt(const byte* in, word32 inLen, byte* out,
@@ -70,7 +75,7 @@ enum {
 };
 
 
-void InitRsaKey(RsaKey* key, void* heap)
+int InitRsaKey(RsaKey* key, void* heap)
 {
 #ifdef HAVE_CAVIUM
     if (key->magic == CYASSL_RSA_CAVIUM_MAGIC)
@@ -88,10 +93,12 @@ void InitRsaKey(RsaKey* key, void* heap)
     key->q.dp = key->dP.dp = 0;  
     key->u.dp = key->dQ.dp = 0;
 #endif
+
+    return 0;
 }
 
 
-void FreeRsaKey(RsaKey* key)
+int FreeRsaKey(RsaKey* key)
 {
     (void)key;
 
@@ -113,12 +120,15 @@ void FreeRsaKey(RsaKey* key)
     mp_clear(&key->e);
     mp_clear(&key->n);
 #endif
+
+    return 0;
 }
 
-static void RsaPad(const byte* input, word32 inputLen, byte* pkcsBlock,
+static int RsaPad(const byte* input, word32 inputLen, byte* pkcsBlock,
                    word32 pkcsBlockLen, byte padValue, RNG* rng)
 {
-    if (inputLen == 0) return;
+    if (inputLen == 0)
+        return 0;
 
     pkcsBlock[0] = 0x0;       /* set first byte to zero and advance */
     pkcsBlock++; pkcsBlockLen--;
@@ -130,7 +140,10 @@ static void RsaPad(const byte* input, word32 inputLen, byte* pkcsBlock,
     else {
         /* pad with non-zero random bytes */
         word32 padLen = pkcsBlockLen - inputLen - 1, i;
-        RNG_GenerateBlock(rng, &pkcsBlock[1], padLen);
+        int    ret    = RNG_GenerateBlock(rng, &pkcsBlock[1], padLen);
+
+        if (ret != 0)
+            return ret;
 
         /* remove zeros */
         for (i = 1; i < padLen; i++)
@@ -139,6 +152,8 @@ static void RsaPad(const byte* input, word32 inputLen, byte* pkcsBlock,
 
     pkcsBlock[pkcsBlockLen-inputLen-1] = 0;     /* separator */
     XMEMCPY(pkcsBlock+pkcsBlockLen-inputLen, input, inputLen);
+
+    return 0;
 }
 
 
@@ -288,7 +303,9 @@ int RsaPublicEncrypt(const byte* in, word32 inLen, byte* out, word32 outLen,
     if (inLen > (word32)(sz - RSA_MIN_PAD_SZ))
         return RSA_BUFFER_E;
 
-    RsaPad(in, inLen, out, sz, RSA_BLOCK_TYPE_2, rng);
+    ret = RsaPad(in, inLen, out, sz, RSA_BLOCK_TYPE_2, rng);
+    if (ret != 0)
+        return ret;
 
     if ((ret = RsaFunction(out, sz, out, &outLen, RSA_PUBLIC_ENCRYPT, key)) < 0)
         sz = ret;
@@ -435,7 +452,9 @@ int RsaSSL_Sign(const byte* in, word32 inLen, byte* out, word32 outLen,
     if (inLen > (word32)(sz - RSA_MIN_PAD_SZ))
         return RSA_BUFFER_E;
 
-    RsaPad(in, inLen, out, sz, RSA_BLOCK_TYPE_1, rng);
+    ret = RsaPad(in, inLen, out, sz, RSA_BLOCK_TYPE_1, rng);
+    if (ret != 0)
+        return ret;
 
     if ((ret = RsaFunction(out, sz, out, &outLen, RSA_PRIVATE_ENCRYPT,key)) < 0)
         sz = ret;
@@ -493,7 +512,11 @@ static int rand_prime(mp_int* N, int len, RNG* rng, void* heap)
         fflush(stdout);
 #endif
         /* generate value */
-        RNG_GenerateBlock(rng, buf, len);
+        err = RNG_GenerateBlock(rng, buf, len);
+        if (err != 0) {
+            XFREE(buf, heap, DYNAMIC_TYPE_RSA);
+            return err;
+        }
 
         /* munge bits */
         buf[0]     |= 0x80 | 0x40;
@@ -664,10 +687,10 @@ void RsaFreeCavium(RsaKey* rsa)
 
 
 /* Initialize cavium RSA key */
-static void InitCaviumRsaKey(RsaKey* key, void* heap)
+static int InitCaviumRsaKey(RsaKey* key, void* heap)
 {
     if (key == NULL)
-        return;
+        return BAD_FUNC_ARG;
 
     key->heap = heap;
     key->type = -1;   /* don't know yet */
@@ -689,14 +712,16 @@ static void InitCaviumRsaKey(RsaKey* key, void* heap)
     key->c_dP_Sz = 0;
     key->c_dQ_Sz = 0;
     key->c_uSz   = 0;
+    
+    return 0;
 }
 
 
 /* Free cavium RSA key */
-static void FreeCaviumRsaKey(RsaKey* key)
+static int FreeCaviumRsaKey(RsaKey* key)
 {
     if (key == NULL)
-        return;
+        return BAD_FUNC_ARG;
 
     XFREE(key->c_n,  key->heap, DYNAMIC_TYPE_CAVIUM_TMP);
     XFREE(key->c_e,  key->heap, DYNAMIC_TYPE_CAVIUM_TMP);
@@ -707,7 +732,7 @@ static void FreeCaviumRsaKey(RsaKey* key)
     XFREE(key->c_dQ, key->heap, DYNAMIC_TYPE_CAVIUM_TMP);
     XFREE(key->c_u,  key->heap, DYNAMIC_TYPE_CAVIUM_TMP);
 
-    InitCaviumRsaKey(key, key->heap);  /* reset pointers */
+    return InitCaviumRsaKey(key, key->heap);  /* reset pointers */
 }
 
 

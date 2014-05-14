@@ -1,6 +1,6 @@
 /* asm.c
  *
- * Copyright (C) 2006-2013 wolfSSL Inc.
+ * Copyright (C) 2006-2014 wolfSSL Inc.
  *
  * This file is part of CyaSSL.
  *
@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 #ifdef HAVE_CONFIG_H
@@ -318,6 +318,36 @@ __asm__(                                        \
 #define LOOP_START \
    mu = c[x] * mp
 
+
+#ifdef __thumb__
+
+#define INNERMUL                    \
+__asm__(                                \
+    " LDR    r0,%1            \n\t" \
+    " ADDS   r0,r0,%0         \n\t" \
+    " ITE    CS               \n\t" \
+    " MOVCS  %0,#1            \n\t" \
+    " MOVCC  %0,#0            \n\t" \
+    " UMLAL  r0,%0,%3,%4      \n\t" \
+    " STR    r0,%1            \n\t" \
+:"=r"(cy),"=m"(_c[0]):"0"(cy),"r"(mu),"r"(*tmpm++),"m"(_c[0]):"r0","cc");
+
+#define PROPCARRY                  \
+__asm__(                               \
+    " LDR   r0,%1            \n\t" \
+    " ADDS  r0,r0,%0         \n\t" \
+    " STR   r0,%1            \n\t" \
+    " ITE   CS               \n\t" \
+    " MOVCS %0,#1            \n\t" \
+    " MOVCC %0,#0            \n\t" \
+:"=r"(cy),"=m"(_c[0]):"0"(cy),"m"(_c[0]):"r0","cc");
+
+
+/* TAO thumb mode uses ite (if then else) to detect carry directly
+ * fixed unmatched constraint warning by changing 1 to m  */
+
+#else  /* __thumb__ */
+
 #define INNERMUL                    \
 __asm__(                                \
     " LDR    r0,%1            \n\t" \
@@ -336,6 +366,8 @@ __asm__(                               \
     " MOVCS %0,#1            \n\t" \
     " MOVCC %0,#0            \n\t" \
 :"=r"(cy),"=m"(_c[0]):"0"(cy),"1"(_c[0]):"r0","cc");
+
+#endif /* __thumb__ */
 
 #elif defined(TFM_PPC32)
 
@@ -725,9 +757,11 @@ __asm__(                                                             \
 
 #define SQRADDSC(i, j)                                           \
 __asm__(                                                             \
-"  UMULL  %0,%1,%6,%7              \n\t"                         \
+"  UMULL  %0,%1,%3,%4              \n\t"                         \
 "  SUB    %2,%2,%2                 \n\t"                         \
-:"=r"(sc0), "=r"(sc1), "=r"(sc2) : "0"(sc0), "1"(sc1), "2"(sc2), "r"(i), "r"(j) : "cc");
+:"=r"(sc0), "=r"(sc1), "=r"(sc2) : "r"(i), "r"(j) : "cc");
+
+/* TAO removed sc0,1,2 as input to remove warning so %6,%7 become %3,%4 */
 
 #define SQRADDAC(i, j)                                           \
 __asm__(                                                             \

@@ -1,6 +1,6 @@
 /* ripemd.c
  *
- * Copyright (C) 2006-2013 wolfSSL Inc.
+ * Copyright (C) 2006-2014 wolfSSL Inc.
  *
  * This file is part of CyaSSL.
  *
@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 
@@ -295,7 +295,8 @@ void RipeMdUpdate(RipeMd* ripemd, const byte* data, word32 len)
 
         if (ripemd->buffLen == RIPEMD_BLOCK_SIZE) {
             #ifdef BIG_ENDIAN_ORDER
-                ByteReverseBytes(local, local, RIPEMD_BLOCK_SIZE);
+                ByteReverseWords(ripemd->buffer, ripemd->buffer,
+                                 RIPEMD_BLOCK_SIZE);
             #endif
             Transform(ripemd);
             AddLength(ripemd, RIPEMD_BLOCK_SIZE);
@@ -319,7 +320,7 @@ void RipeMdFinal(RipeMd* ripemd, byte* hash)
         ripemd->buffLen += RIPEMD_BLOCK_SIZE - ripemd->buffLen;
 
         #ifdef BIG_ENDIAN_ORDER
-            ByteReverseBytes(local, local, RIPEMD_BLOCK_SIZE);
+            ByteReverseWords(ripemd->buffer, ripemd->buffer, RIPEMD_BLOCK_SIZE);
         #endif
         Transform(ripemd);
         ripemd->buffLen = 0;
@@ -333,7 +334,7 @@ void RipeMdFinal(RipeMd* ripemd, byte* hash)
 
     /* store lengths */
     #ifdef BIG_ENDIAN_ORDER
-        ByteReverseBytes(local, local, RIPEMD_BLOCK_SIZE);
+        ByteReverseWords(ripemd->buffer, ripemd->buffer, RIPEMD_BLOCK_SIZE);
     #endif
     /* ! length ordering dependent on digest endian type ! */
     XMEMCPY(&local[RIPEMD_PAD_SIZE], &ripemd->loLen, sizeof(word32));

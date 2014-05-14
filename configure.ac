@@ -1,17 +1,15 @@
 # configure.ac
 #
-# Copyright (C) 2006-2013 wolfSSL Inc.
+# Copyright (C) 2006-2014 wolfSSL Inc.
 #
 # This file is part of CyaSSL.
 #
 #
 
-AC_INIT([cyassl],[2.9.0],[https://github.com/cyassl/cyassl/issues],[cyassl],[http://www.yassl.com])
+AC_INIT([cyassl],[3.0.0],[https://github.com/cyassl/cyassl/issues],[cyassl],[http://www.wolfssl.com])
 
 AC_CONFIG_AUX_DIR([build-aux])
 
-# using $targget_cpu to only turn on fastmath by default on x86_64 
-AC_CANONICAL_TARGET
 AC_CANONICAL_HOST
 AC_CANONICAL_BUILD
 
@@ -33,7 +31,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h:config.in])dnl Keep filename to 8.3 for MS-DOS.
 
 #shared library versioning
-CYASSL_LIBRARY_VERSION=5:3:0
+CYASSL_LIBRARY_VERSION=5:5:0
 #                      | | |
 #               +------+ | +---+
 #               |        |     |
@@ -103,8 +101,13 @@ OPTIMIZE_FAST_CFLAGS="-O2 -fomit-frame-pointer"
 OPTIMIZE_HUGE_CFLAGS="-funroll-loops -DTFM_SMALL_SET -DTFM_HUGE_SET"
 DEBUG_CFLAGS="-g -DDEBUG -DDEBUG_CYASSL"
 
+thread_ls_on=no
 # Thread local storage
-AX_TLS([AM_CFLAGS="$AM_CFLAGS -DHAVE_THREAD_LS"])
+AX_TLS([
+        [AM_CFLAGS="$AM_CFLAGS -DHAVE_THREAD_LS"]
+        [thread_ls_on=yes]
+       ] , [:])
+
 
 # DEBUG
 AX_DEBUG
@@ -987,6 +990,19 @@ fi
 AM_CONDITIONAL([BUILD_MD4], [test "x$ENABLED_MD4" = "xyes"])
 
 
+# Web Server Build 
+AC_ARG_ENABLE([webserver],
+    [  --enable-webserver      Enable Web Server (default: disabled)],
+    [ ENABLED_WEBSERVER=$enableval ],
+    [ ENABLED_WEBSERVER=no ]
+    )
+
+if test "$ENABLED_WEBSERVER" = "yes"
+then
+    AM_CFLAGS="$AM_CFLAGS -DHAVE_WEBSERVER"
+fi
+
+
 # PWDBASED
 AC_ARG_ENABLE([pwdbased],
     [  --enable-pwdbased       Enable PWDBASED (default: disabled)],
@@ -996,9 +1012,9 @@ AC_ARG_ENABLE([pwdbased],
 
 if test "$ENABLED_PWDBASED" = "no"
 then
-    if test "$ENABLED_OPENSSLEXTRA" = "yes"
+    if test "$ENABLED_OPENSSLEXTRA" = "yes" || test "$ENABLED_WEBSERVER" = "yes"
     then
-        # opensslextra needs pwdbased 
+        # opensslextra and webserver needs pwdbased 
         ENABLED_PWDBASED=yes
     else
         AM_CFLAGS="$AM_CFLAGS -DNO_PWDBASED"
@@ -1042,17 +1058,31 @@ fi
 AM_CONDITIONAL([BUILD_RABBIT], [test "x$ENABLED_RABBIT" = "xyes"])
 
 
-# Web Server Build 
-AC_ARG_ENABLE([webserver],
-    [  --enable-webserver      Enable Web Server (default: disabled)],
-    [ ENABLED_WEBSERVER=$enableval ],
-    [ ENABLED_WEBSERVER=no ]
+# FIPS 
+AC_ARG_ENABLE([fips],
+    [  --enable-fips           Enable FIPS 140-2 (default: disabled)],
+    [ ENABLED_FIPS=$enableval ],
+    [ ENABLED_FIPS=no ]
     )
 
-if test "$ENABLED_WEBSERVER" = "yes"
+if test "x$ENABLED_FIPS" = "xyes"
 then
-    AM_CFLAGS="$AM_CFLAGS -DHAVE_WEBSERVER"
+    # requires thread local storage
+    if test "$thread_ls_on" = "no"
+    then
+        AC_MSG_ERROR([FIPS requires Thread Local Storage])
+    fi
+    # requires SHA512
+    if test "x$ENABLED_SHA512" = "xno"
+    then
+        ENABLED_SHA512="yes"
+        AM_CFLAGS="$AM_CFLAGS -DCYASSL_SHA512 -DCYASSL_SHA384"
+        AM_CONDITIONAL([BUILD_SHA512], [test "x$ENABLED_SHA512" = "xyes"])
+    fi
+    AM_CFLAGS="$AM_CFLAGS -DHAVE_FIPS"
 fi
+
+AM_CONDITIONAL([BUILD_FIPS], [test "x$ENABLED_FIPS" = "xyes"])
 
 
 # Filesystem Build 
@@ -1304,6 +1334,19 @@ then
 fi
 
 
+# Small Stack
+AC_ARG_ENABLE([smallstack],
+    [  --enable-smallstack     Enable Small Stack Usage (default: enabled)],
+    [ ENABLED_SMALL_STACK=$enableval ],
+    [ ENABLED_SMALL_STACK=yes ]
+    )
+
+if test "x$ENABLED_SMALL_STACK" = "xyes"
+then
+    AM_CFLAGS="$AM_CFLAGS -DCYASSL_SMALL_STACK"
+fi
+
+
 #valgrind
 AC_ARG_ENABLE([valgrind],
     [  --enable-valgrind       Enable valgrind for unit tests (default: disabled)],
@@ -1340,10 +1383,57 @@ then
 fi
 
 
+# I/O Pool, an example to show user how to override memory handler and use
+# a pool for the input/output buffer requests
+AC_ARG_ENABLE([iopool],
+    [  --enable-iopool         Enable I/O Pool example (default: disabled)],
+    [ ENABLED_IOPOOL=$enableval ],
+    [ ENABLED_IOPOOL=no ]
+    )
+
+if test "$ENABLED_IOPOOL" = "yes"
+then
+    if test "$thread_ls_on" = "no"
+    then
+        AC_MSG_ERROR([I/O Pool example requires Thread Local Storage])
+    fi
+    AM_CFLAGS="$AM_CFLAGS -DHAVE_IO_POOL -DXMALLOC_USER"
+fi
+
+
+# Certificate Service Support 
+AC_ARG_ENABLE([certservice],
+    [  --enable-certservice    Enable cert service (default: disabled)],
+    [ ENABLED_CERT_SERVICE=$enableval ],
+    [ ENABLED_CERT_SERVICE=no ]
+    )
+if test "$ENABLED_CERT_SERVICE" = "yes"
+then
+    # Requires ecc,certgen, and opensslextra make sure on
+    if test "x$ENABLED_CERTGEN" = "xno"
+    then
+        ENABLED_CERTGEN="yes"
+        AM_CFLAGS="$AM_CFLAGS -DCYASSL_CERT_GEN"
+    fi
+    if test "x$ENABLED_ECC" = "xno"
+    then
+        ENABLED_ECC="yes"
+        AM_CFLAGS="$AM_CFLAGS -DHAVE_ECC -DTFM_ECC256 -DECC_SHAMIR"
+        AM_CONDITIONAL([BUILD_ECC], [test "x$ENABLED_ECC" = "xyes"])
+    fi
+    if test "x$ENABLED_OPENSSLEXTRA" = "xno"
+    then
+        ENABLED_OPENSSLEXTRA="yes"
+        AM_CFLAGS="-DOPENSSL_EXTRA $AM_CFLAGS"
+    fi
+    AM_CFLAGS="$AM_CFLAGS -DCYASSL_HAVE_CERT_SERVICE"
+fi
+
+
 # set fastmath default
 FASTMATH_DEFAULT=no
 
-if test "$target_cpu" = "x86_64"
+if test "$host_cpu" = "x86_64"
 then
 FASTMATH_DEFAULT=yes
 fi
@@ -1398,7 +1488,6 @@ AC_ARG_ENABLE([examples],
     [ ENABLED_EXAMPLES=yes ]
     )
 
-AS_IF([test "x$ENABLED_SINGLETHREADED" = "xyes"], [ENABLED_EXAMPLES="no"])
 AS_IF([test "x$ENABLED_FILESYSTEM" = "xno"], [ENABLED_EXAMPLES="no"])
 AS_IF([test "x$ENABLED_INLINE" = "xno"], [ENABLED_EXAMPLES="no"])
 # certs still have sha signatures for now 
@@ -1527,16 +1616,6 @@ then
 fi
 
 LIB_SOCKET_NSL
-
-AC_ARG_ENABLE([gcc-hardening],
-AS_HELP_STRING(--enable-gcc-hardening, Enable compiler security checks (default: disabled)),
-[if test x$enableval = xyes; then
-    AM_CFLAGS="$AM_CFLAGS -D_FORTIFY_SOURCE=2 -fstack-protector-all"
-    AM_CFLAGS="$AM_CFLAGS -fwrapv -fPIE -Wstack-protector"
-    AM_CFLAGS="$AM_CFLAGS --param ssp-buffer-size=1"
-    LDFLAGS="$LDFLAGS -pie"
-fi])
-
 AX_HARDEN_CC_COMPILER_FLAGS
 
 # link to ws2_32 if on mingw
@@ -1583,7 +1662,7 @@ rm -f $OPTION_FILE
 echo "/* cyassl options.h" >> $OPTION_FILE 
 echo " * generated from configure options" >> $OPTION_FILE
 echo " *" >> $OPTION_FILE
-echo " * Copyright (C) 2006-2013 wolfSSL Inc." >> $OPTION_FILE
+echo " * Copyright (C) 2006-2014 wolfSSL Inc." >> $OPTION_FILE
 echo " *" >> $OPTION_FILE
 echo " * This file is part of CyaSSL." >> $OPTION_FILE
 echo " *" >> $OPTION_FILE
@@ -1624,9 +1703,9 @@ echo ""
 echo "   * Installation prefix:       $prefix"
 echo "   * System type:               $host_vendor-$host_os"
 echo "   * Host CPU:                  $host_cpu"
-echo "   * C Compiler:                $CC_VERSION"
+echo "   * C Compiler:                $CC"
 echo "   * C Flags:                   $CFLAGS"
-echo "   * C++ Compiler:              $CXX_VERSION"
+echo "   * C++ Compiler:              $CXX"
 echo "   * C++ Flags:                 $CXXFLAGS"
 echo "   * CPP Flags:                 $CPPFLAGS"
 echo "   * LIB Flags:                 $LIB"
@@ -1674,6 +1753,7 @@ echo "   * ECC_ENCRYPT:               $ENABLED_ECC_ENCRYPT"
 echo "   * ASN:                       $ENABLED_ASN"
 echo "   * CODING:                    $ENABLED_CODING"
 echo "   * MEMORY:                    $ENABLED_MEMORY"
+echo "   * I/O POOL:                  $ENABLED_IOPOOL"
 echo "   * ERROR_STRINGS:             $ENABLED_ERROR_STRINGS"
 echo "   * DTLS:                      $ENABLED_DTLS"
 echo "   * Old TLS Versions:          $ENABLED_OLD_TLS"
@@ -1693,6 +1773,7 @@ echo "   * Supported Elliptic Curves: $ENABLED_SUPPORTED_CURVES"
 echo "   * All TLS Extensions:        $ENABLED_TLSX"
 echo "   * PKCS#7                     $ENABLED_PKCS7"
 echo "   * wolfSCEP                   $ENABLED_WOLFSCEP"
+echo "   * Small Stack:               $ENABLED_SMALL_STACK"
 echo "   * valgrind unit tests:       $ENABLED_VALGRIND"
 echo "   * LIBZ:                      $ENABLED_LIBZ"
 echo "   * Examples:                  $ENABLED_EXAMPLES"

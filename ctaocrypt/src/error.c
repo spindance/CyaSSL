@@ -1,6 +1,6 @@
 /* error.c
  *
- * Copyright (C) 2006-2013 wolfSSL Inc.
+ * Copyright (C) 2006-2014 wolfSSL Inc.
  *
  * This file is part of CyaSSL.
  *
@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 #ifdef HAVE_CONFIG_H
@@ -25,7 +25,7 @@
  
 #include <cyassl/ctaocrypt/settings.h>
 
-#include <cyassl/ctaocrypt/error.h>
+#include <cyassl/ctaocrypt/error-crypt.h>
 
 #ifdef _MSC_VER
     /* 4996 warning to use MS extensions e.g., strcpy_s instead of XSTRNCPY */
@@ -243,6 +243,10 @@ void CTaoCryptErrorString(int error, char* buffer)
         XSTRNCPY(buffer, "ASN NTRU key decode error, invalid input", max);
         break;
 
+    case ASN_CRIT_EXT_E:
+        XSTRNCPY(buffer, "X.509 Critical extension ignored", max);
+        break;
+
     case ECC_BAD_ARG_E :
         XSTRNCPY(buffer, "ECC input argument wrong type, invalid input", max);
         break;
@@ -341,6 +345,14 @@ void CTaoCryptErrorString(int error, char* buffer)
 
     case PKCS7_RECIP_E:
         XSTRNCPY(buffer, "PKCS#7 error: no matching recipient found", max);
+        break;
+
+    case FIPS_NOT_ALLOWED_E:
+        XSTRNCPY(buffer, "FIPS mode not allowed error", max);
+        break;
+
+    case ASN_NAME_INVALID_E:
+        XSTRNCPY(buffer, "Name Constraint error", max);
         break;
 
     default:

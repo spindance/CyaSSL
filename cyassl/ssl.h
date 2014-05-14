@@ -1,6 +1,6 @@
 /* ssl.h
  *
- * Copyright (C) 2006-2013 wolfSSL Inc.
+ * Copyright (C) 2006-2014 wolfSSL Inc.
  *
  * This file is part of CyaSSL.
  *
@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 
@@ -619,7 +619,7 @@ enum {
 
 /* extras end */
 
-#ifndef NO_FILESYSTEM
+#if !defined(NO_FILESYSTEM) && !defined(NO_STDIO_FILESYSTEM)
 /* CyaSSL extension, provide last error from SSL_get_error
    since not using thread storage error queue */
 CYASSL_API void  CyaSSL_ERR_print_errors_fp(FILE*, int err);
@@ -824,8 +824,10 @@ CYASSL_API char* CyaSSL_X509_get_next_altname(CYASSL_X509*);
 CYASSL_API CYASSL_X509*
     CyaSSL_X509_d2i(CYASSL_X509** x509, const unsigned char* in, int len);
 #ifndef NO_FILESYSTEM
-CYASSL_API CYASSL_X509*
-    CyaSSL_X509_d2i_fp(CYASSL_X509** x509, FILE* file);
+    #ifndef NO_STDIO_FILESYSTEM
+    CYASSL_API CYASSL_X509*
+        CyaSSL_X509_d2i_fp(CYASSL_X509** x509, FILE* file);
+    #endif
 CYASSL_API CYASSL_X509*
     CyaSSL_X509_load_certificate_file(const char* fname, int format);
 #endif
@@ -1285,8 +1287,12 @@ CYASSL_API int CyaSSL_accept_ex(CYASSL*, HandShakeCallBack, TimeoutCallBack,
 
 
 #ifdef CYASSL_HAVE_WOLFSCEP
-CYASSL_API void CyaSSL_wolfSCEP(void);
+    CYASSL_API void CyaSSL_wolfSCEP(void);
 #endif /* CYASSL_HAVE_WOLFSCEP */
+
+#ifdef CYASSL_HAVE_CERT_SERVICE
+    CYASSL_API void CyaSSL_cert_service(void);
+#endif
 
 
 #ifdef __cplusplus

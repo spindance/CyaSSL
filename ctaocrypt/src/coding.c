@@ -1,6 +1,6 @@
 /* coding.c
  *
- * Copyright (C) 2006-2013 wolfSSL Inc.
+ * Copyright (C) 2006-2014 wolfSSL Inc.
  *
  * This file is part of CyaSSL.
  *
@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 #ifdef HAVE_CONFIG_H
@@ -28,7 +28,7 @@
 #ifndef NO_CODING
 
 #include <cyassl/ctaocrypt/coding.h>
-#include <cyassl/ctaocrypt/error.h>
+#include <cyassl/ctaocrypt/error-crypt.h>
 #include <cyassl/ctaocrypt/logging.h>
 
 
@@ -95,9 +95,9 @@ int Base64_Decode(const byte* in, word32 inLen, byte* out, word32* outLen)
         e3 = (e3 == PAD) ? 0 : base64Decode[e3 - 0x2B];
         e4 = (e4 == PAD) ? 0 : base64Decode[e4 - 0x2B];
 
-        b1 = (e1 << 2) | (e2 >> 4);
-        b2 = ((e2 & 0xF) << 4) | (e3 >> 2);
-        b3 = ((e3 & 0x3) << 6) | e4;
+        b1 = (byte)((e1 << 2) | (e2 >> 4));
+        b2 = (byte)(((e2 & 0xF) << 4) | (e3 >> 2));
+        b3 = (byte)(((e3 & 0x3) << 6) | e4);
 
         out[i++] = b1;
         if (!pad3)
@@ -251,8 +251,8 @@ static int DoBase64_Encode(const byte* in, word32 inLen, byte* out,
 
         /* encoded idx */
         byte e1 = b1 >> 2;
-        byte e2 = ((b1 & 0x3) << 4) | (b2 >> 4);
-        byte e3 = ((b2 & 0xF) << 2) | (b3 >> 6);
+        byte e2 = (byte)(((b1 & 0x3) << 4) | (b2 >> 4));
+        byte e3 = (byte)(((b2 & 0xF) << 2) | (b3 >> 6));
         byte e4 = b3 & 0x3F;
 
         /* store */
@@ -281,8 +281,8 @@ static int DoBase64_Encode(const byte* in, word32 inLen, byte* out,
         byte b2 = (twoBytes) ? in[j++] : 0;
 
         byte e1 = b1 >> 2;
-        byte e2 = ((b1 & 0x3) << 4) | (b2 >> 4);
-        byte e3 =  (b2 & 0xF) << 2;
+        byte e2 = (byte)(((b1 & 0x3) << 4) | (b2 >> 4));
+        byte e3 = (byte)((b2 & 0xF) << 2);
 
         ret = CEscape(escaped, e1, out, &i, *outLen, 0);
         if (ret == 0) 
@@ -324,10 +324,20 @@ int Base64_EncodeEsc(const byte* in, word32 inLen, byte* out, word32* outLen)
 }
 
 
+#endif  /* defined(OPENSSL_EXTRA) || defined (SESSION_CERTS) || defined(CYASSL_KEY_GEN) || defined(CYASSL_CERT_GEN) || defined(HAVE_WEBSERVER) */
+
+
+#if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER) || defined(HAVE_FIPS)
+
 static
 const byte hexDecode[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
                            BAD, BAD, BAD, BAD, BAD, BAD, BAD,
-                           10, 11, 12, 13, 14, 15 
+                           10, 11, 12, 13, 14, 15,  /* upper case A-F */
+                           BAD, BAD, BAD, BAD, BAD, BAD, BAD, BAD,
+                           BAD, BAD, BAD, BAD, BAD, BAD, BAD, BAD,
+                           BAD, BAD, BAD, BAD, BAD, BAD, BAD, BAD,
+                           BAD, BAD,  /* G - ` */
+                           10, 11, 12, 13, 14, 15   /* lower case a-f */
                          };  /* A starts at 0x41 not 0x3A */
 
 int Base16_Decode(const byte* in, word32 inLen, byte* out, word32* outLen)
@@ -375,7 +385,7 @@ int Base16_Decode(const byte* in, word32 inLen, byte* out, word32* outLen)
         if (b == BAD || b2 == BAD)
             return ASN_INPUT_E;
         
-        out[outIdx++] = (b << 4) | b2;
+        out[outIdx++] = (byte)((b << 4) | b2);
         inLen -= 2;
     }
 
@@ -384,5 +394,6 @@ int Base16_Decode(const byte* in, word32 inLen, byte* out, word32* outLen)
 }
 
 
-#endif  /* defined(OPENSSL_EXTRA) || defined (SESSION_CERTS) || defined(CYASSL_KEY_GEN) || defined(CYASSL_CERT_GEN) || defined(HAVE_WEBSERVER) */
+#endif /* (OPENSSL_EXTRA) || (HAVE_WEBSERVER) || (HAVE_FIPS) */
+
 #endif /* NO_CODING */

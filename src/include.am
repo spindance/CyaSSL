@@ -36,6 +36,11 @@ if BUILD_ASN
 src_libcyassl_la_SOURCES += ctaocrypt/src/asn.c
 endif
 
+if BUILD_FIPS
+src_libcyassl_la_SOURCES += ctaocrypt/src/fips.c
+src_libcyassl_la_SOURCES += ctaocrypt/src/fips_test.c
+endif
+
 if BUILD_CODING
 src_libcyassl_la_SOURCES += ctaocrypt/src/coding.c
 endif

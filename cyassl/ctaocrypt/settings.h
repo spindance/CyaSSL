@@ -1,6 +1,6 @@
 /* settings.h
  *
- * Copyright (C) 2006-2013 wolfSSL Inc.
+ * Copyright (C) 2006-2014 wolfSSL Inc.
  *
  * This file is part of CyaSSL.
  *
@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 /* Place OS specific preprocessor flags, defines, includes here, will be
@@ -51,6 +51,9 @@
 /* Uncomment next line if using Microchip TCP/IP stack, version 6 or later */
 /* #define MICROCHIP_TCPIP */
 
+/* Uncomment next line if using PIC32MZ Crypto Engine */
+/* #define CYASSL_MICROCHIP_PIC32MZ */
+        
 /* Uncomment next line if using FreeRTOS */
 /* #define FREERTOS */
 
@@ -81,11 +84,21 @@
 /* Uncomment next line if using QL SEP settings */
 /* #define CYASSL_QL */
 
+/* Uncomment next line if using LwIP native TCP socket settings */
+/* #define HAVE_LWIP_NATIVE */
+
+/* Uncomment next line if building for EROAD */
+/* #define CYASSL_EROAD */
 
 #include <cyassl/ctaocrypt/visibility.h>
 
 #ifdef IPHONE
     #define SIZEOF_LONG_LONG 8
+#endif
+
+
+#ifdef CYASSL_USER_SETTINGS
+    #include <user_settings.h>
 #endif
 
 
@@ -114,7 +127,16 @@
     #include "nx_api.h"
 #endif
 
+#if defined(HAVE_LWIP_NATIVE) /* using LwIP native TCP socket */
+    #define CYASSL_LWIP
+    #define NO_WRITEV
+    #define SINGLE_THREADED
+    #define CYASSL_USER_IO
+    #define NO_FILESYSTEM
+#endif 
+
 #ifdef MICROCHIP_PIC32
+    /* #define CYASSL_MICROCHIP_PIC32MZ */
     #define SIZEOF_LONG_LONG 8
     #define SINGLE_THREADED
     #define CYASSL_USER_IO
@@ -125,6 +147,18 @@
     #define TFM_TIMING_RESISTANT
 #endif
 
+#ifdef CYASSL_MICROCHIP_PIC32MZ
+    #define CYASSL_PIC32MZ_CE
+    #define CYASSL_PIC32MZ_CRYPT
+    #define HAVE_AES_ENGINE
+    #define CYASSL_PIC32MZ_RNG
+    /* #define CYASSL_PIC32MZ_HASH */
+    #define CYASSL_AES_COUNTER
+    #define HAVE_AESGCM
+    #define NO_BIG_INT
+
+#endif
+
 #ifdef MICROCHIP_TCPIP_V5
     /* include timer functions */
     #include "TCPIP Stack/TCPIP.h"
@@ -132,46 +166,52 @@
 
 #ifdef MICROCHIP_TCPIP
     /* include timer, NTP functions */
-    #include "system/system_services.h"
     #ifdef MICROCHIP_MPLAB_HARMONY
         #include "tcpip/tcpip.h"
     #else
+        #include "system/system_services.h"
         #include "tcpip/sntp.h"
     #endif
 #endif
 
 #ifdef MBED
-    #define SINGLE_THREADED
     #define CYASSL_USER_IO
+    #define NO_FILESYSTEM
+    #define NO_CERT
+    #define USE_CERT_BUFFERS_1024
     #define NO_WRITEV
     #define NO_DEV_RANDOM
     #define NO_SHA512
     #define NO_DH
     #define NO_DSA
     #define NO_HC128
-#endif /* MBED */
-
-#ifdef CYASSL_TYTO
-    #include "rand.h"
-    #define FREERTOS
-    #define NO_FILESYSTEM
-    #define CYASSL_USER_IO
-    #define NO_DEV_RANDOM
     #define HAVE_ECC
-    #define HAVE_ECC_ENCRYPT
-    #define ECC_SHAMIR
-    #define HAVE_HKDF
-    #define USE_FAST_MATH
-    #define TFM_TIMING_RESISTANT
-    #define FP_MAX_BITS 512
+    #define NO_SESSION_CACHE
+    #define CYASSL_CMSIS_RTOS
+#endif
+
+
+#ifdef CYASSL_EROAD
+    #define FREESCALE_MQX
+    #define FREESCALE_MMCAU
+    #define SINGLE_THREADED
+    #define NO_STDIO_FILESYSTEM
+    #define CYASSL_LEANPSK
+    #define HAVE_NULL_CIPHER
     #define NO_OLD_TLS
-    #define NO_MD4
-    #define NO_RABBIT
-    #define NO_HC128
+    #define NO_ASN
+    #define NO_BIG_INT
     #define NO_RSA
     #define NO_DSA
+    #define NO_DH
+    #define NO_CERTS
     #define NO_PWDBASED
-    #define NO_PSK
+    #define NO_DES3
+    #define NO_MD4
+    #define NO_RC4
+    #define NO_MD5
+    #define NO_SESSION_CACHE
+    #define NO_MAIN_DRIVER
 #endif
 
 #ifdef FREERTOS_WINSIM
@@ -182,7 +222,7 @@
 
 /* Micrium will use Visual Studio for compilation but not the Win32 API */
 #if defined(_WIN32) && !defined(MICRIUM) && !defined(FREERTOS) \
-        && !defined(EBSNET)
+        && !defined(EBSNET) && !defined(CYASSL_EROAD)
     #define USE_WINDOWS_API
 #endif
 

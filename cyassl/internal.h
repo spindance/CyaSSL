@@ -1,6 +1,6 @@
 /* internal.h
  *
- * Copyright (C) 2006-2013 wolfSSL Inc.
+ * Copyright (C) 2006-2014 wolfSSL Inc.
  *
  * This file is part of CyaSSL.
  *
@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 
@@ -95,6 +95,8 @@
     #else
         #include <rtl.h>
     #endif
+#elif defined(MBED)
+
 #else
     #ifndef SINGLE_THREADED
         #define CYASSL_PTHREADS
@@ -339,7 +341,7 @@ void c32to24(word32 in, word24 out);
             #define BUILD_TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
             #define BUILD_TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256
             
-            #if defined(CYASS_SHA384)
+            #if defined(CYASSL_SHA384)
                 #define BUILD_TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
                 #define BUILD_TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384
             #endif
@@ -518,8 +520,8 @@ enum {
      * with non-ECC AES-GCM */
     TLS_RSA_WITH_AES_128_CCM_8         = 0xa0,
     TLS_RSA_WITH_AES_256_CCM_8         = 0xa1,
-    TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 = 0xc6, /* Still TBD, made up */
-    TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8 = 0xc7, /* Still TBD, made up */
+    TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 = 0xae,
+    TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8 = 0xaf,
     TLS_PSK_WITH_AES_128_CCM           = 0xa4,
     TLS_PSK_WITH_AES_256_CCM           = 0xa5,
     TLS_PSK_WITH_AES_128_CCM_8         = 0xa8,
@@ -586,7 +588,6 @@ enum Misc {
     SEQ_SZ         =  8,       /* 64 bit sequence number  */
     BYTE3_LEN      =  3,       /* up to 24 bit byte lengths */
     ALERT_SIZE     =  2,       /* level + description     */
-    REQUEST_HEADER =  2,       /* always use 2 bytes      */
     VERIFY_HEADER  =  2,       /* always use 2 bytes      */
     EXT_ID_SZ      =  2,       /* always use 2 bytes      */
     MAX_DH_SIZE    = 513,      /* 4096 bit plus possible leading 0 */
@@ -599,7 +600,9 @@ enum Misc {
     COOKIE_SZ    = 20,         /* use a 20 byte cookie    */
     SUITE_LEN    =  2,         /* cipher suite sz length  */
     ENUM_LEN     =  1,         /* always a byte           */
-    OPAQUE16_LEN =  2,         /* always 2 bytes          */
+    OPAQUE8_LEN  =  1,         /* 1 byte                  */
+    OPAQUE16_LEN =  2,         /* 2 bytes                 */
+    OPAQUE24_LEN =  3,         /* 3 bytes                 */
     COMP_LEN     =  1,         /* compression length      */
     CURVE_LEN    =  2,         /* ecc named curve length  */
     SERVER_ID_LEN = 20,        /* server session id length  */
@@ -818,7 +821,7 @@ CYASSL_LOCAL void InitSSL_Method(CYASSL_METHOD*, ProtocolVersion);
 
 /* for sniffer */
 CYASSL_LOCAL int DoFinished(CYASSL* ssl, const byte* input, word32* inOutIdx,
-                            int sniff);
+                            word32 size, word32 totalSz, int sniff);
 CYASSL_LOCAL int DoApplicationData(CYASSL* ssl, byte* input, word32* inOutIdx);
 
 
@@ -891,8 +894,8 @@ enum {
     #define STATIC_BUFFER_LEN RECORD_HEADER_SZ + RECORD_SIZE + COMP_EXTRA + \
              MTU_EXTRA + MAX_MSG_EXTRA
 #else
-    /* zero length arrays may not be supported */
-    #define STATIC_BUFFER_LEN 1
+    /* don't fragment memory from the record header */
+    #define STATIC_BUFFER_LEN RECORD_HEADER_SZ
 #endif
 
 typedef struct {
@@ -1523,7 +1526,7 @@ CYASSL_SESSION* GetSession(CYASSL*, byte*);
 CYASSL_LOCAL
 int          SetSession(CYASSL*, CYASSL_SESSION*);
 
-typedef void (*hmacfp) (CYASSL*, byte*, const byte*, word32, int, int);
+typedef int (*hmacfp) (CYASSL*, byte*, const byte*, word32, int, int);
 
 #ifndef NO_CLIENT_CACHE
     CYASSL_SESSION* GetSessionClient(CYASSL*, const byte*, int);
@@ -2063,13 +2066,15 @@ CYASSL_LOCAL int IsAtLeastTLSv1_2(const CYASSL* ssl);
 CYASSL_LOCAL void FreeHandshakeResources(CYASSL* ssl);
 CYASSL_LOCAL void ShrinkInputBuffer(CYASSL* ssl, int forcedFree);
 CYASSL_LOCAL void ShrinkOutputBuffer(CYASSL* ssl);
+
+CYASSL_LOCAL int VerifyClientSuite(CYASSL* ssl);
 #ifndef NO_CERTS
     CYASSL_LOCAL Signer* GetCA(void* cm, byte* hash);
     #ifndef NO_SKID
         CYASSL_LOCAL Signer* GetCAByName(void* cm, byte* hash);
     #endif
 #endif
-CYASSL_LOCAL void BuildTlsFinished(CYASSL* ssl, Hashes* hashes,
+CYASSL_LOCAL int  BuildTlsFinished(CYASSL* ssl, Hashes* hashes,
                                    const byte* sender);
 CYASSL_LOCAL void FreeArrays(CYASSL* ssl, int keep);
 CYASSL_LOCAL  int CheckAvailableSize(CYASSL *ssl, int size);
@@ -2077,7 +2082,7 @@ CYASSL_LOCAL  int GrowInputBuffer(CYASSL* ssl, int size, int usedLength);
 
 #ifndef NO_TLS
     CYASSL_LOCAL int  MakeTlsMasterSecret(CYASSL*);
-    CYASSL_LOCAL void TLS_hmac(CYASSL* ssl, byte* digest, const byte* in,
+    CYASSL_LOCAL int  TLS_hmac(CYASSL* ssl, byte* digest, const byte* in,
                                word32 sz, int content, int verify);
 #endif
 

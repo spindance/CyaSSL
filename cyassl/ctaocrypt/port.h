@@ -1,6 +1,6 @@
 /* port.h
  *
- * Copyright (C) 2006-2013 wolfSSL Inc.
+ * Copyright (C) 2006-2014 wolfSSL Inc.
  *
  * This file is part of CyaSSL.
  *
@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 
@@ -60,6 +60,8 @@
     #else
         #include <rtl.h>
     #endif
+#elif defined(CYASSL_CMSIS_RTOS)
+    #include "cmsis_os.h"    
 #else
     #ifndef SINGLE_THREADED
         #define CYASSL_PTHREADS
@@ -100,6 +102,8 @@
         #else
             typedef OS_MUT CyaSSL_Mutex;
         #endif
+    #elif defined(CYASSL_CMSIS_RTOS)
+        typedef osMutexId CyaSSL_Mutex;
     #else
         #error Need a mutex type in multithreaded mode
     #endif /* USE_WINDOWS_API */
@@ -109,6 +113,77 @@ CYASSL_LOCAL int InitMutex(CyaSSL_Mutex*);
 CYASSL_LOCAL int FreeMutex(CyaSSL_Mutex*);
 CYASSL_LOCAL int LockMutex(CyaSSL_Mutex*);
 CYASSL_LOCAL int UnLockMutex(CyaSSL_Mutex*);
+
+
+/* filesystem abstraction layer, used by ssl.c */
+#ifndef NO_FILESYSTEM
+
+#if defined(EBSNET)
+    #define XFILE                    int
+    #define XFOPEN(NAME, MODE)       vf_open((const char *)NAME, VO_RDONLY, 0);
+    #define XFSEEK                   vf_lseek
+    #define XFTELL                   vf_tell
+    #define XREWIND                  vf_rewind
+    #define XFREAD(BUF, SZ, AMT, FD) vf_read(FD, BUF, SZ*AMT)
+    #define XFWRITE(BUF, SZ, AMT, FD) vf_write(FD, BUF, SZ*AMT)
+    #define XFCLOSE                  vf_close
+    #define XSEEK_END                VSEEK_END
+    #define XBADFILE                 -1
+#elif defined(LSR_FS)
+    #include <fs.h>
+    #define XFILE                   struct fs_file*
+    #define XFOPEN(NAME, MODE)      fs_open((char*)NAME);
+    #define XFSEEK(F, O, W)         (void)F
+    #define XFTELL(F)               (F)->len
+    #define XREWIND(F)              (void)F
+    #define XFREAD(BUF, SZ, AMT, F) fs_read(F, (char*)BUF, SZ*AMT)
+    #define XFWRITE(BUF, SZ, AMT, F) fs_write(F, (char*)BUF, SZ*AMT)
+    #define XFCLOSE                 fs_close
+    #define XSEEK_END               0
+    #define XBADFILE                NULL
+#elif defined(FREESCALE_MQX)
+    #define XFILE                   MQX_FILE_PTR
+    #define XFOPEN                  fopen
+    #define XFSEEK                  fseek
+    #define XFTELL                  ftell
+    #define XREWIND(F)              fseek(F, 0, IO_SEEK_SET)
+    #define XFREAD                  fread
+    #define XFWRITE                 fwrite
+    #define XFCLOSE                 fclose
+    #define XSEEK_END               IO_SEEK_END
+    #define XBADFILE                NULL
+#elif defined(MICRIUM)
+    #include <fs.h>
+    #define XFILE      FS_FILE*
+    #define XFOPEN     fs_fopen
+    #define XFSEEK     fs_fseek
+    #define XFTELL     fs_ftell
+    #define XREWIND    fs_rewind
+    #define XFREAD     fs_fread
+    #define XFWRITE    fs_fwrite
+    #define XFCLOSE    fs_fclose
+    #define XSEEK_END  FS_SEEK_END
+    #define XBADFILE   NULL
+#else
+    /* stdio, default case */
+    #define XFILE      FILE*
+    #if defined(CYASSL_MDK_ARM)
+        extern FILE * CyaSSL_fopen(const char *name, const char *mode) ;
+        #define XFOPEN     CyaSSL_fopen
+    #else
+        #define XFOPEN     fopen
+    #endif
+    #define XFSEEK     fseek
+    #define XFTELL     ftell
+    #define XREWIND    rewind
+    #define XFREAD     fread
+    #define XFWRITE    fwrite
+    #define XFCLOSE    fclose
+    #define XSEEK_END  SEEK_END
+    #define XBADFILE   NULL
+#endif
+
+#endif /* NO_FILESYSTEM */
 
 
 #ifdef __cplusplus

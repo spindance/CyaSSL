@@ -1,6 +1,6 @@
 /* server.c
  *
- * Copyright (C) 2006-2013 wolfSSL Inc.
+ * Copyright (C) 2006-2014 wolfSSL Inc.
  *
  * This file is part of CyaSSL.
  *
@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 #ifdef HAVE_CONFIG_H
@@ -153,7 +153,7 @@ THREAD_RETURN CYASSL_THREAD server_test(void* args)
     int    version = SERVER_DEFAULT_VERSION;
     int    doCliCertCheck = 1;
     int    useAnyAddr = 0;
-    int    port = yasslPort;
+    word16 port = yasslPort;
     int    usePsk = 0;
     int    doDTLS = 0;
     int    useNtruKey   = 0;
@@ -230,7 +230,7 @@ THREAD_RETURN CYASSL_THREAD server_test(void* args)
                 break;
 
             case 'p' :
-                port = atoi(myoptarg);
+                port = (word16)atoi(myoptarg);
                 #if !defined(NO_MAIN_DRIVER) || defined(USE_WINDOWS_API)
                     if (port == 0)
                         err_sys("port number cannot be 0");
@@ -374,7 +374,7 @@ THREAD_RETURN CYASSL_THREAD server_test(void* args)
     if (fewerPackets)
         CyaSSL_CTX_set_group_messages(ctx);
 
-#ifdef OPENSSL_EXTRA
+#if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER)
     SSL_CTX_set_default_passwd_cb(ctx, PasswordCallBack);
 #endif
 

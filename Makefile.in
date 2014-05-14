@@ -208,7 +208,6 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-target_triplet = @target@
 bin_PROGRAMS =
 noinst_PROGRAMS = ctaocrypt/benchmark/benchmark$(EXEEXT) \
 	ctaocrypt/test/testctaocrypt$(EXEEXT) $(am__EXEEXT_3) \
@@ -266,45 +265,48 @@ DIST_COMMON = $(srcdir)/cyassl/include.am \
 @BUILD_RSA_TRUE@am__append_2 = ctaocrypt/src/rsa.c
 @BUILD_DH_TRUE@am__append_3 = ctaocrypt/src/dh.c
 @BUILD_ASN_TRUE@am__append_4 = ctaocrypt/src/asn.c
-@BUILD_CODING_TRUE@am__append_5 = ctaocrypt/src/coding.c
-@BUILD_AES_TRUE@am__append_6 = ctaocrypt/src/aes.c
-@BUILD_DES3_TRUE@am__append_7 = ctaocrypt/src/des3.c
-@BUILD_SHA_TRUE@am__append_8 = ctaocrypt/src/sha.c
-@BUILD_RC4_TRUE@am__append_9 = ctaocrypt/src/arc4.c
-@BUILD_MD4_TRUE@am__append_10 = ctaocrypt/src/md4.c
-@BUILD_MD5_TRUE@am__append_11 = ctaocrypt/src/md5.c
-@BUILD_PWDBASED_TRUE@am__append_12 = ctaocrypt/src/pwdbased.c
-@BUILD_DSA_TRUE@am__append_13 = ctaocrypt/src/dsa.c
-@BUILD_AESNI_TRUE@am__append_14 = ctaocrypt/src/aes_asm.s
-@BUILD_CAMELLIA_TRUE@am__append_15 = ctaocrypt/src/camellia.c
-@BUILD_MD2_TRUE@am__append_16 = ctaocrypt/src/md2.c
-@BUILD_RIPEMD_TRUE@am__append_17 = ctaocrypt/src/ripemd.c
-@BUILD_SHA512_TRUE@am__append_18 = ctaocrypt/src/sha512.c
-@BUILD_BLAKE2_TRUE@am__append_19 = ctaocrypt/src/blake2b.c
-@BUILD_SNIFFER_TRUE@am__append_20 = src/sniffer.c
-@BUILD_HC128_TRUE@am__append_21 = ctaocrypt/src/hc128.c
-@BUILD_RABBIT_TRUE@am__append_22 = ctaocrypt/src/rabbit.c
-@BUILD_INLINE_FALSE@am__append_23 = ctaocrypt/src/misc.c
-@BUILD_FASTMATH_TRUE@am__append_24 = ctaocrypt/src/tfm.c
-@BUILD_SLOWMATH_TRUE@am__append_25 = ctaocrypt/src/integer.c
-@BUILD_ECC_TRUE@am__append_26 = ctaocrypt/src/ecc.c
-@BUILD_OCSP_TRUE@am__append_27 = src/ocsp.c
-@BUILD_CRL_TRUE@am__append_28 = src/crl.c
-@BUILD_LIBZ_TRUE@am__append_29 = ctaocrypt/src/compress.c
-@BUILD_PKCS7_TRUE@am__append_30 = ctaocrypt/src/pkcs7.c
-@BUILD_EXAMPLES_TRUE@am__append_31 = examples/client/client \
+@BUILD_FIPS_TRUE@am__append_5 = ctaocrypt/src/fips.c \
+@BUILD_FIPS_TRUE@	ctaocrypt/src/fips_test.c
+@BUILD_CODING_TRUE@am__append_6 = ctaocrypt/src/coding.c
+@BUILD_AES_TRUE@am__append_7 = ctaocrypt/src/aes.c
+@BUILD_DES3_TRUE@am__append_8 = ctaocrypt/src/des3.c
+@BUILD_SHA_TRUE@am__append_9 = ctaocrypt/src/sha.c
+@BUILD_RC4_TRUE@am__append_10 = ctaocrypt/src/arc4.c
+@BUILD_MD4_TRUE@am__append_11 = ctaocrypt/src/md4.c
+@BUILD_MD5_TRUE@am__append_12 = ctaocrypt/src/md5.c
+@BUILD_PWDBASED_TRUE@am__append_13 = ctaocrypt/src/pwdbased.c
+@BUILD_DSA_TRUE@am__append_14 = ctaocrypt/src/dsa.c
+@BUILD_AESNI_TRUE@am__append_15 = ctaocrypt/src/aes_asm.s
+@BUILD_CAMELLIA_TRUE@am__append_16 = ctaocrypt/src/camellia.c
+@BUILD_MD2_TRUE@am__append_17 = ctaocrypt/src/md2.c
+@BUILD_RIPEMD_TRUE@am__append_18 = ctaocrypt/src/ripemd.c
+@BUILD_SHA512_TRUE@am__append_19 = ctaocrypt/src/sha512.c
+@BUILD_BLAKE2_TRUE@am__append_20 = ctaocrypt/src/blake2b.c
+@BUILD_SNIFFER_TRUE@am__append_21 = src/sniffer.c
+@BUILD_HC128_TRUE@am__append_22 = ctaocrypt/src/hc128.c
+@BUILD_RABBIT_TRUE@am__append_23 = ctaocrypt/src/rabbit.c
+@BUILD_INLINE_FALSE@am__append_24 = ctaocrypt/src/misc.c
+@BUILD_FASTMATH_TRUE@am__append_25 = ctaocrypt/src/tfm.c
+@BUILD_SLOWMATH_TRUE@am__append_26 = ctaocrypt/src/integer.c
+@BUILD_ECC_TRUE@am__append_27 = ctaocrypt/src/ecc.c
+@BUILD_OCSP_TRUE@am__append_28 = src/ocsp.c
+@BUILD_CRL_TRUE@am__append_29 = src/crl.c
+@BUILD_LIBZ_TRUE@am__append_30 = ctaocrypt/src/compress.c
+@BUILD_PKCS7_TRUE@am__append_31 = ctaocrypt/src/pkcs7.c
+@BUILD_EXAMPLES_TRUE@am__append_32 = examples/client/client \
 @BUILD_EXAMPLES_TRUE@	examples/server/server \
 @BUILD_EXAMPLES_TRUE@	examples/echoclient/echoclient \
 @BUILD_EXAMPLES_TRUE@	examples/echoserver/echoserver \
-@BUILD_EXAMPLES_TRUE@	testsuite/testsuite tests/unit
-@BUILD_EXAMPLES_TRUE@am__append_32 = examples/client/client.h \
+@BUILD_EXAMPLES_TRUE@	testsuite/testsuite.test tests/unit.test
+@BUILD_EXAMPLES_TRUE@am__append_33 = examples/client/client.h \
 @BUILD_EXAMPLES_TRUE@	examples/server/server.h \
 @BUILD_EXAMPLES_TRUE@	examples/echoclient/echoclient.h \
 @BUILD_EXAMPLES_TRUE@	examples/echoserver/echoserver.h
-@BUILD_EXAMPLES_TRUE@am__append_33 = testsuite/testsuite tests/unit
-@BUILD_SNIFFTEST_TRUE@am__append_34 = sslSniffer/sslSnifferTest/snifftest
-@BUILD_MCAPI_TRUE@am__append_35 = mcapi/test
-@BUILD_MCAPI_TRUE@am__append_36 = mcapi/test 
+@BUILD_EXAMPLES_TRUE@am__append_34 = testsuite/testsuite.test \
+@BUILD_EXAMPLES_TRUE@	tests/unit.test
+@BUILD_SNIFFTEST_TRUE@am__append_35 = sslSniffer/sslSnifferTest/snifftest
+@BUILD_MCAPI_TRUE@am__append_36 = mcapi/test
+@BUILD_MCAPI_TRUE@am__append_37 = mcapi/test 
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_add_am_macro.m4 \
@@ -379,6 +381,7 @@ am__src_libcyassl_la_SOURCES_DIST = src/internal.c src/io.c src/keys.c \
 	ctaocrypt/src/logging.c ctaocrypt/src/port.c \
 	ctaocrypt/src/error.c ctaocrypt/src/memory.c \
 	ctaocrypt/src/rsa.c ctaocrypt/src/dh.c ctaocrypt/src/asn.c \
+	ctaocrypt/src/fips.c ctaocrypt/src/fips_test.c \
 	ctaocrypt/src/coding.c ctaocrypt/src/aes.c \
 	ctaocrypt/src/des3.c ctaocrypt/src/sha.c ctaocrypt/src/arc4.c \
 	ctaocrypt/src/md4.c ctaocrypt/src/md5.c \
@@ -396,48 +399,51 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @BUILD_RSA_TRUE@am__objects_2 = ctaocrypt/src/src_libcyassl_la-rsa.lo
 @BUILD_DH_TRUE@am__objects_3 = ctaocrypt/src/src_libcyassl_la-dh.lo
 @BUILD_ASN_TRUE@am__objects_4 = ctaocrypt/src/src_libcyassl_la-asn.lo
-@BUILD_CODING_TRUE@am__objects_5 =  \
+@BUILD_FIPS_TRUE@am__objects_5 =  \
+@BUILD_FIPS_TRUE@	ctaocrypt/src/src_libcyassl_la-fips.lo \
+@BUILD_FIPS_TRUE@	ctaocrypt/src/src_libcyassl_la-fips_test.lo
+@BUILD_CODING_TRUE@am__objects_6 =  \
 @BUILD_CODING_TRUE@	ctaocrypt/src/src_libcyassl_la-coding.lo
-@BUILD_AES_TRUE@am__objects_6 = ctaocrypt/src/src_libcyassl_la-aes.lo
-@BUILD_DES3_TRUE@am__objects_7 =  \
+@BUILD_AES_TRUE@am__objects_7 = ctaocrypt/src/src_libcyassl_la-aes.lo
+@BUILD_DES3_TRUE@am__objects_8 =  \
 @BUILD_DES3_TRUE@	ctaocrypt/src/src_libcyassl_la-des3.lo
-@BUILD_SHA_TRUE@am__objects_8 = ctaocrypt/src/src_libcyassl_la-sha.lo
-@BUILD_RC4_TRUE@am__objects_9 =  \
+@BUILD_SHA_TRUE@am__objects_9 = ctaocrypt/src/src_libcyassl_la-sha.lo
+@BUILD_RC4_TRUE@am__objects_10 =  \
 @BUILD_RC4_TRUE@	ctaocrypt/src/src_libcyassl_la-arc4.lo
-@BUILD_MD4_TRUE@am__objects_10 =  \
+@BUILD_MD4_TRUE@am__objects_11 =  \
 @BUILD_MD4_TRUE@	ctaocrypt/src/src_libcyassl_la-md4.lo
-@BUILD_MD5_TRUE@am__objects_11 =  \
+@BUILD_MD5_TRUE@am__objects_12 =  \
 @BUILD_MD5_TRUE@	ctaocrypt/src/src_libcyassl_la-md5.lo
-@BUILD_PWDBASED_TRUE@am__objects_12 = ctaocrypt/src/src_libcyassl_la-pwdbased.lo
-@BUILD_DSA_TRUE@am__objects_13 =  \
+@BUILD_PWDBASED_TRUE@am__objects_13 = ctaocrypt/src/src_libcyassl_la-pwdbased.lo
+@BUILD_DSA_TRUE@am__objects_14 =  \
 @BUILD_DSA_TRUE@	ctaocrypt/src/src_libcyassl_la-dsa.lo
-@BUILD_AESNI_TRUE@am__objects_14 = ctaocrypt/src/aes_asm.lo
-@BUILD_CAMELLIA_TRUE@am__objects_15 = ctaocrypt/src/src_libcyassl_la-camellia.lo
-@BUILD_MD2_TRUE@am__objects_16 =  \
+@BUILD_AESNI_TRUE@am__objects_15 = ctaocrypt/src/aes_asm.lo
+@BUILD_CAMELLIA_TRUE@am__objects_16 = ctaocrypt/src/src_libcyassl_la-camellia.lo
+@BUILD_MD2_TRUE@am__objects_17 =  \
 @BUILD_MD2_TRUE@	ctaocrypt/src/src_libcyassl_la-md2.lo
-@BUILD_RIPEMD_TRUE@am__objects_17 =  \
+@BUILD_RIPEMD_TRUE@am__objects_18 =  \
 @BUILD_RIPEMD_TRUE@	ctaocrypt/src/src_libcyassl_la-ripemd.lo
-@BUILD_SHA512_TRUE@am__objects_18 =  \
+@BUILD_SHA512_TRUE@am__objects_19 =  \
 @BUILD_SHA512_TRUE@	ctaocrypt/src/src_libcyassl_la-sha512.lo
-@BUILD_BLAKE2_TRUE@am__objects_19 =  \
+@BUILD_BLAKE2_TRUE@am__objects_20 =  \
 @BUILD_BLAKE2_TRUE@	ctaocrypt/src/src_libcyassl_la-blake2b.lo
-@BUILD_SNIFFER_TRUE@am__objects_20 = src/src_libcyassl_la-sniffer.lo
-@BUILD_HC128_TRUE@am__objects_21 =  \
+@BUILD_SNIFFER_TRUE@am__objects_21 = src/src_libcyassl_la-sniffer.lo
+@BUILD_HC128_TRUE@am__objects_22 =  \
 @BUILD_HC128_TRUE@	ctaocrypt/src/src_libcyassl_la-hc128.lo
-@BUILD_RABBIT_TRUE@am__objects_22 =  \
+@BUILD_RABBIT_TRUE@am__objects_23 =  \
 @BUILD_RABBIT_TRUE@	ctaocrypt/src/src_libcyassl_la-rabbit.lo
-@BUILD_INLINE_FALSE@am__objects_23 =  \
+@BUILD_INLINE_FALSE@am__objects_24 =  \
 @BUILD_INLINE_FALSE@	ctaocrypt/src/src_libcyassl_la-misc.lo
-@BUILD_FASTMATH_TRUE@am__objects_24 =  \
+@BUILD_FASTMATH_TRUE@am__objects_25 =  \
 @BUILD_FASTMATH_TRUE@	ctaocrypt/src/src_libcyassl_la-tfm.lo
-@BUILD_SLOWMATH_TRUE@am__objects_25 = ctaocrypt/src/src_libcyassl_la-integer.lo
-@BUILD_ECC_TRUE@am__objects_26 =  \
+@BUILD_SLOWMATH_TRUE@am__objects_26 = ctaocrypt/src/src_libcyassl_la-integer.lo
+@BUILD_ECC_TRUE@am__objects_27 =  \
 @BUILD_ECC_TRUE@	ctaocrypt/src/src_libcyassl_la-ecc.lo
-@BUILD_OCSP_TRUE@am__objects_27 = src/src_libcyassl_la-ocsp.lo
-@BUILD_CRL_TRUE@am__objects_28 = src/src_libcyassl_la-crl.lo
-@BUILD_LIBZ_TRUE@am__objects_29 =  \
+@BUILD_OCSP_TRUE@am__objects_28 = src/src_libcyassl_la-ocsp.lo
+@BUILD_CRL_TRUE@am__objects_29 = src/src_libcyassl_la-crl.lo
+@BUILD_LIBZ_TRUE@am__objects_30 =  \
 @BUILD_LIBZ_TRUE@	ctaocrypt/src/src_libcyassl_la-compress.lo
-@BUILD_PKCS7_TRUE@am__objects_30 =  \
+@BUILD_PKCS7_TRUE@am__objects_31 =  \
 @BUILD_PKCS7_TRUE@	ctaocrypt/src/src_libcyassl_la-pkcs7.lo
 am_src_libcyassl_la_OBJECTS = src/src_libcyassl_la-internal.lo \
 	src/src_libcyassl_la-io.lo src/src_libcyassl_la-keys.lo \
@@ -457,7 +463,7 @@ am_src_libcyassl_la_OBJECTS = src/src_libcyassl_la-internal.lo \
 	$(am__objects_20) $(am__objects_21) $(am__objects_22) \
 	$(am__objects_23) $(am__objects_24) $(am__objects_25) \
 	$(am__objects_26) $(am__objects_27) $(am__objects_28) \
-	$(am__objects_29) $(am__objects_30)
+	$(am__objects_29) $(am__objects_30) $(am__objects_31)
 src_libcyassl_la_OBJECTS = $(am_src_libcyassl_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -467,15 +473,15 @@ src_libcyassl_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(src_libcyassl_la_CFLAGS) $(CFLAGS) \
 	$(src_libcyassl_la_LDFLAGS) $(LDFLAGS) -o $@
-@BUILD_EXAMPLES_TRUE@am__EXEEXT_1 = testsuite/testsuite$(EXEEXT) \
-@BUILD_EXAMPLES_TRUE@	tests/unit$(EXEEXT)
+@BUILD_EXAMPLES_TRUE@am__EXEEXT_1 = testsuite/testsuite.test$(EXEEXT) \
+@BUILD_EXAMPLES_TRUE@	tests/unit.test$(EXEEXT)
 @BUILD_MCAPI_TRUE@am__EXEEXT_2 = mcapi/test$(EXEEXT)
 @BUILD_EXAMPLES_TRUE@am__EXEEXT_3 = examples/client/client$(EXEEXT) \
 @BUILD_EXAMPLES_TRUE@	examples/server/server$(EXEEXT) \
 @BUILD_EXAMPLES_TRUE@	examples/echoclient/echoclient$(EXEEXT) \
 @BUILD_EXAMPLES_TRUE@	examples/echoserver/echoserver$(EXEEXT) \
-@BUILD_EXAMPLES_TRUE@	testsuite/testsuite$(EXEEXT) \
-@BUILD_EXAMPLES_TRUE@	tests/unit$(EXEEXT)
+@BUILD_EXAMPLES_TRUE@	testsuite/testsuite.test$(EXEEXT) \
+@BUILD_EXAMPLES_TRUE@	tests/unit.test$(EXEEXT)
 @BUILD_SNIFFTEST_TRUE@am__EXEEXT_4 = sslSniffer/sslSnifferTest/snifftest$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS) $(noinst_PROGRAMS)
 am_ctaocrypt_benchmark_benchmark_OBJECTS =  \
@@ -515,33 +521,36 @@ am__sslSniffer_sslSnifferTest_snifftest_SOURCES_DIST =  \
 @BUILD_SNIFFTEST_TRUE@am_sslSniffer_sslSnifferTest_snifftest_OBJECTS = sslSniffer/sslSnifferTest/snifftest.$(OBJEXT)
 sslSniffer_sslSnifferTest_snifftest_OBJECTS =  \
 	$(am_sslSniffer_sslSnifferTest_snifftest_OBJECTS)
-am__tests_unit_SOURCES_DIST = tests/unit.c tests/api.c tests/suites.c \
-	tests/hash.c examples/client/client.c examples/server/server.c
-@BUILD_EXAMPLES_TRUE@am_tests_unit_OBJECTS =  \
-@BUILD_EXAMPLES_TRUE@	tests/tests_unit-unit.$(OBJEXT) \
-@BUILD_EXAMPLES_TRUE@	tests/tests_unit-api.$(OBJEXT) \
-@BUILD_EXAMPLES_TRUE@	tests/tests_unit-suites.$(OBJEXT) \
-@BUILD_EXAMPLES_TRUE@	tests/tests_unit-hash.$(OBJEXT) \
-@BUILD_EXAMPLES_TRUE@	examples/client/tests_unit-client.$(OBJEXT) \
-@BUILD_EXAMPLES_TRUE@	examples/server/tests_unit-server.$(OBJEXT)
-tests_unit_OBJECTS = $(am_tests_unit_OBJECTS)
-tests_unit_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(tests_unit_CFLAGS) \
-	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-am__testsuite_testsuite_SOURCES_DIST = ctaocrypt/test/test.c \
+am__tests_unit_test_SOURCES_DIST = tests/unit.c tests/api.c \
+	tests/suites.c tests/hash.c examples/client/client.c \
+	examples/server/server.c
+@BUILD_EXAMPLES_TRUE@am_tests_unit_test_OBJECTS =  \
+@BUILD_EXAMPLES_TRUE@	tests/tests_unit_test-unit.$(OBJEXT) \
+@BUILD_EXAMPLES_TRUE@	tests/tests_unit_test-api.$(OBJEXT) \
+@BUILD_EXAMPLES_TRUE@	tests/tests_unit_test-suites.$(OBJEXT) \
+@BUILD_EXAMPLES_TRUE@	tests/tests_unit_test-hash.$(OBJEXT) \
+@BUILD_EXAMPLES_TRUE@	examples/client/tests_unit_test-client.$(OBJEXT) \
+@BUILD_EXAMPLES_TRUE@	examples/server/tests_unit_test-server.$(OBJEXT)
+tests_unit_test_OBJECTS = $(am_tests_unit_test_OBJECTS)
+tests_unit_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(tests_unit_test_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
+	-o $@
+am__testsuite_testsuite_test_SOURCES_DIST = ctaocrypt/test/test.c \
 	examples/client/client.c examples/echoclient/echoclient.c \
 	examples/echoserver/echoserver.c examples/server/server.c \
 	testsuite/testsuite.c
-@BUILD_EXAMPLES_TRUE@am_testsuite_testsuite_OBJECTS = ctaocrypt/test/testsuite_testsuite-test.$(OBJEXT) \
-@BUILD_EXAMPLES_TRUE@	examples/client/testsuite_testsuite-client.$(OBJEXT) \
-@BUILD_EXAMPLES_TRUE@	examples/echoclient/testsuite_testsuite-echoclient.$(OBJEXT) \
-@BUILD_EXAMPLES_TRUE@	examples/echoserver/testsuite_testsuite-echoserver.$(OBJEXT) \
-@BUILD_EXAMPLES_TRUE@	examples/server/testsuite_testsuite-server.$(OBJEXT) \
-@BUILD_EXAMPLES_TRUE@	testsuite/testsuite_testsuite-testsuite.$(OBJEXT)
-testsuite_testsuite_OBJECTS = $(am_testsuite_testsuite_OBJECTS)
-testsuite_testsuite_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+@BUILD_EXAMPLES_TRUE@am_testsuite_testsuite_test_OBJECTS = ctaocrypt/test/testsuite_testsuite_test-test.$(OBJEXT) \
+@BUILD_EXAMPLES_TRUE@	examples/client/testsuite_testsuite_test-client.$(OBJEXT) \
+@BUILD_EXAMPLES_TRUE@	examples/echoclient/testsuite_testsuite_test-echoclient.$(OBJEXT) \
+@BUILD_EXAMPLES_TRUE@	examples/echoserver/testsuite_testsuite_test-echoserver.$(OBJEXT) \
+@BUILD_EXAMPLES_TRUE@	examples/server/testsuite_testsuite_test-server.$(OBJEXT) \
+@BUILD_EXAMPLES_TRUE@	testsuite/testsuite_testsuite_test-testsuite.$(OBJEXT)
+testsuite_testsuite_test_OBJECTS =  \
+	$(am_testsuite_testsuite_test_OBJECTS)
+testsuite_testsuite_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
-	$(testsuite_testsuite_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
+	$(testsuite_testsuite_test_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -593,7 +602,7 @@ SOURCES = $(src_libcyassl_la_SOURCES) \
 	$(examples_echoserver_echoserver_SOURCES) \
 	$(examples_server_server_SOURCES) $(mcapi_test_SOURCES) \
 	$(sslSniffer_sslSnifferTest_snifftest_SOURCES) \
-	$(tests_unit_SOURCES) $(testsuite_testsuite_SOURCES)
+	$(tests_unit_test_SOURCES) $(testsuite_testsuite_test_SOURCES)
 DIST_SOURCES = $(am__src_libcyassl_la_SOURCES_DIST) \
 	$(ctaocrypt_benchmark_benchmark_SOURCES) \
 	$(ctaocrypt_test_testctaocrypt_SOURCES) \
@@ -603,8 +612,8 @@ DIST_SOURCES = $(am__src_libcyassl_la_SOURCES_DIST) \
 	$(am__examples_server_server_SOURCES_DIST) \
 	$(am__mcapi_test_SOURCES_DIST) \
 	$(am__sslSniffer_sslSnifferTest_snifftest_SOURCES_DIST) \
-	$(am__tests_unit_SOURCES_DIST) \
-	$(am__testsuite_testsuite_SOURCES_DIST)
+	$(am__tests_unit_test_SOURCES_DIST) \
+	$(am__testsuite_testsuite_test_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -796,7 +805,6 @@ am__set_TESTS_bases = \
   bases=`echo $$bases`
 RECHECK_LOGS = $(TEST_LOGS)
 TEST_SUITE_LOG = test-suite.log
-TEST_EXTENSIONS = @EXEEXT@ .test
 LOG_DRIVER = $(SHELL) $(top_srcdir)/build-aux/test-driver
 LOG_COMPILE = $(LOG_COMPILER) $(AM_LOG_FLAGS) $(LOG_FLAGS)
 am__set_b = \
@@ -968,11 +976,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
 sysconfdir = @sysconfdir@
-target = @target@
 target_alias = @target_alias@
-target_cpu = @target_cpu@
-target_os = @target_os@
-target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
@@ -985,11 +989,11 @@ DISTCLEANFILES = aminclude.am ctaocrypt/benchmark/.libs/benchmark \
 	ctaocrypt/test/.libs/testctaocrypt \
 	examples/client/.libs/client examples/server/.libs/server \
 	examples/echoclient/.libs/echoclient \
-	examples/echoserver/.libs/echoserver testsuite/.libs/testsuite \
-	tests/.libs/unit sslSniffer/sslSnifferTest/.libs/snifftest \
-	cyassl-config
+	examples/echoserver/.libs/echoserver \
+	testsuite/.libs/testsuite.test tests/.libs/unit.test \
+	sslSniffer/sslSnifferTest/.libs/snifftest cyassl-config
 noinst_HEADERS = cyassl/internal.h ctaocrypt/test/test.h \
-	$(am__append_32) mcapi/crypto.h
+	$(am__append_33) mcapi/crypto.h
 lib_LTLIBRARIES = src/libcyassl.la
 man_MANS = 
 noinst_LTLIBRARIES = 
@@ -1000,24 +1004,24 @@ nobase_include_HEADERS = cyassl/ctaocrypt/aes.h \
 	cyassl/ctaocrypt/coding.h cyassl/ctaocrypt/compress.h \
 	cyassl/ctaocrypt/des3.h cyassl/ctaocrypt/dh.h \
 	cyassl/ctaocrypt/dsa.h cyassl/ctaocrypt/ecc.h \
-	cyassl/ctaocrypt/error.h cyassl/ctaocrypt/hc128.h \
-	cyassl/ctaocrypt/hmac.h cyassl/ctaocrypt/integer.h \
-	cyassl/ctaocrypt/md2.h cyassl/ctaocrypt/md4.h \
-	cyassl/ctaocrypt/md5.h cyassl/ctaocrypt/misc.h \
-	cyassl/ctaocrypt/pkcs7.h cyassl/ctaocrypt/port.h \
-	cyassl/ctaocrypt/pwdbased.h cyassl/ctaocrypt/rabbit.h \
-	cyassl/ctaocrypt/random.h cyassl/ctaocrypt/ripemd.h \
-	cyassl/ctaocrypt/rsa.h cyassl/ctaocrypt/settings.h \
-	cyassl/ctaocrypt/sha256.h cyassl/ctaocrypt/sha512.h \
-	cyassl/ctaocrypt/sha.h cyassl/ctaocrypt/blake2.h \
-	cyassl/ctaocrypt/blake2-int.h cyassl/ctaocrypt/blake2-impl.h \
-	cyassl/ctaocrypt/tfm.h cyassl/ctaocrypt/types.h \
-	cyassl/ctaocrypt/visibility.h cyassl/ctaocrypt/logging.h \
-	cyassl/ctaocrypt/memory.h cyassl/ctaocrypt/mpi_class.h \
-	cyassl/ctaocrypt/mpi_superclass.h cyassl/openssl/asn1.h \
-	cyassl/openssl/bio.h cyassl/openssl/bn.h cyassl/openssl/conf.h \
-	cyassl/openssl/crypto.h cyassl/openssl/des.h \
-	cyassl/openssl/dh.h cyassl/openssl/dsa.h \
+	cyassl/ctaocrypt/error-crypt.h cyassl/ctaocrypt/fips_test.h \
+	cyassl/ctaocrypt/hc128.h cyassl/ctaocrypt/hmac.h \
+	cyassl/ctaocrypt/integer.h cyassl/ctaocrypt/md2.h \
+	cyassl/ctaocrypt/md4.h cyassl/ctaocrypt/md5.h \
+	cyassl/ctaocrypt/misc.h cyassl/ctaocrypt/pkcs7.h \
+	cyassl/ctaocrypt/port.h cyassl/ctaocrypt/pwdbased.h \
+	cyassl/ctaocrypt/rabbit.h cyassl/ctaocrypt/random.h \
+	cyassl/ctaocrypt/ripemd.h cyassl/ctaocrypt/rsa.h \
+	cyassl/ctaocrypt/settings.h cyassl/ctaocrypt/sha256.h \
+	cyassl/ctaocrypt/sha512.h cyassl/ctaocrypt/sha.h \
+	cyassl/ctaocrypt/blake2.h cyassl/ctaocrypt/blake2-int.h \
+	cyassl/ctaocrypt/blake2-impl.h cyassl/ctaocrypt/tfm.h \
+	cyassl/ctaocrypt/types.h cyassl/ctaocrypt/visibility.h \
+	cyassl/ctaocrypt/logging.h cyassl/ctaocrypt/memory.h \
+	cyassl/ctaocrypt/mpi_class.h cyassl/ctaocrypt/mpi_superclass.h \
+	cyassl/openssl/asn1.h cyassl/openssl/bio.h cyassl/openssl/bn.h \
+	cyassl/openssl/conf.h cyassl/openssl/crypto.h \
+	cyassl/openssl/des.h cyassl/openssl/dh.h cyassl/openssl/dsa.h \
 	cyassl/openssl/ecdsa.h cyassl/openssl/ec.h \
 	cyassl/openssl/engine.h cyassl/openssl/err.h \
 	cyassl/openssl/evp.h cyassl/openssl/hmac.h \
@@ -1029,10 +1033,11 @@ nobase_include_HEADERS = cyassl/ctaocrypt/aes.h \
 	cyassl/openssl/rand.h cyassl/openssl/rsa.h \
 	cyassl/openssl/sha.h cyassl/openssl/ssl.h \
 	cyassl/openssl/stack.h cyassl/openssl/ui.h \
-	cyassl/openssl/x509.h cyassl/openssl/x509v3.h cyassl/error.h \
-	cyassl/ssl.h cyassl/sniffer_error.h cyassl/sniffer.h \
-	cyassl/callbacks.h cyassl/certs_test.h cyassl/test.h \
-	cyassl/version.h cyassl/options.h cyassl/ocsp.h cyassl/crl.h
+	cyassl/openssl/x509.h cyassl/openssl/x509v3.h \
+	cyassl/error-ssl.h cyassl/ssl.h cyassl/sniffer_error.h \
+	cyassl/sniffer.h cyassl/callbacks.h cyassl/certs_test.h \
+	cyassl/test.h cyassl/version.h cyassl/options.h cyassl/ocsp.h \
+	cyassl/crl.h
 EXTRA_HEADERS = 
 BUILT_SOURCES = 
 EXTRA_DIST = lib/dummy cyassl-ntru.vcproj cyassl.vcproj \
@@ -1156,7 +1161,7 @@ src_libcyassl_la_SOURCES = src/internal.c src/io.c src/keys.c \
 	$(am__append_21) $(am__append_22) $(am__append_23) \
 	$(am__append_24) $(am__append_25) $(am__append_26) \
 	$(am__append_27) $(am__append_28) $(am__append_29) \
-	$(am__append_30)
+	$(am__append_30) $(am__append_31)
 src_libcyassl_la_LDFLAGS = ${AM_LDFLAGS} -no-undefined -version-info ${CYASSL_LIBRARY_VERSION}
 src_libcyassl_la_LIBADD = $(LIBM)
 src_libcyassl_la_CFLAGS = -DBUILDING_CYASSL $(AM_CFLAGS)
@@ -1181,7 +1186,7 @@ ctaocrypt_test_testctaocrypt_DEPENDENCIES = src/libcyassl.la
 @BUILD_EXAMPLES_TRUE@examples_echoserver_echoserver_SOURCES = examples/echoserver/echoserver.c
 @BUILD_EXAMPLES_TRUE@examples_echoserver_echoserver_LDADD = src/libcyassl.la
 @BUILD_EXAMPLES_TRUE@examples_echoserver_echoserver_DEPENDENCIES = src/libcyassl.la
-@BUILD_EXAMPLES_TRUE@testsuite_testsuite_SOURCES = \
+@BUILD_EXAMPLES_TRUE@testsuite_testsuite_test_SOURCES = \
 @BUILD_EXAMPLES_TRUE@			      ctaocrypt/test/test.c \
 @BUILD_EXAMPLES_TRUE@			      examples/client/client.c \
 @BUILD_EXAMPLES_TRUE@			      examples/echoclient/echoclient.c \
@@ -1189,10 +1194,10 @@ ctaocrypt_test_testctaocrypt_DEPENDENCIES = src/libcyassl.la
 @BUILD_EXAMPLES_TRUE@			      examples/server/server.c \
 @BUILD_EXAMPLES_TRUE@			      testsuite/testsuite.c
 
-@BUILD_EXAMPLES_TRUE@testsuite_testsuite_CFLAGS = -DNO_MAIN_DRIVER $(AM_CFLAGS)
-@BUILD_EXAMPLES_TRUE@testsuite_testsuite_LDADD = src/libcyassl.la
-@BUILD_EXAMPLES_TRUE@testsuite_testsuite_DEPENDENCIES = src/libcyassl.la
-@BUILD_EXAMPLES_TRUE@tests_unit_SOURCES = \
+@BUILD_EXAMPLES_TRUE@testsuite_testsuite_test_CFLAGS = -DNO_MAIN_DRIVER $(AM_CFLAGS)
+@BUILD_EXAMPLES_TRUE@testsuite_testsuite_test_LDADD = src/libcyassl.la
+@BUILD_EXAMPLES_TRUE@testsuite_testsuite_test_DEPENDENCIES = src/libcyassl.la
+@BUILD_EXAMPLES_TRUE@tests_unit_test_SOURCES = \
 @BUILD_EXAMPLES_TRUE@                  tests/unit.c \
 @BUILD_EXAMPLES_TRUE@                  tests/api.c \
 @BUILD_EXAMPLES_TRUE@                  tests/suites.c \
@@ -1200,9 +1205,9 @@ ctaocrypt_test_testctaocrypt_DEPENDENCIES = src/libcyassl.la
 @BUILD_EXAMPLES_TRUE@                  examples/client/client.c \
 @BUILD_EXAMPLES_TRUE@                  examples/server/server.c
 
-@BUILD_EXAMPLES_TRUE@tests_unit_CFLAGS = -DNO_MAIN_DRIVER $(AM_CFLAGS)
-@BUILD_EXAMPLES_TRUE@tests_unit_LDADD = src/libcyassl.la
-@BUILD_EXAMPLES_TRUE@tests_unit_DEPENDENCIES = src/libcyassl.la
+@BUILD_EXAMPLES_TRUE@tests_unit_test_CFLAGS = -DNO_MAIN_DRIVER $(AM_CFLAGS)
+@BUILD_EXAMPLES_TRUE@tests_unit_test_LDADD = src/libcyassl.la
+@BUILD_EXAMPLES_TRUE@tests_unit_test_DEPENDENCIES = src/libcyassl.la
 @BUILD_SNIFFTEST_TRUE@sslSniffer_sslSnifferTest_snifftest_SOURCES = sslSniffer/sslSnifferTest/snifftest.c
 @BUILD_SNIFFTEST_TRUE@sslSniffer_sslSnifferTest_snifftest_LDADD = src/libcyassl.la -lpcap
 @BUILD_SNIFFTEST_TRUE@sslSniffer_sslSnifferTest_snifftest_DEPENDENCIES = src/libcyassl.la
@@ -1212,6 +1217,7 @@ ctaocrypt_test_testctaocrypt_DEPENDENCIES = src/libcyassl.la
 @BUILD_MCAPI_TRUE@mcapi_test_LDADD = src/libcyassl.la 
 @BUILD_MCAPI_TRUE@mcapi_test_DEPENDENCIES = src/libcyassl.la
 @USE_VALGRIND_TRUE@TESTS_ENVIRONMENT = ./valgrind-error.sh
+TEST_EXTENSIONS = .test
 all: $(BUILT_SOURCES) config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -1369,6 +1375,11 @@ ctaocrypt/src/src_libcyassl_la-rsa.lo: ctaocrypt/src/$(am__dirstamp) \
 ctaocrypt/src/src_libcyassl_la-dh.lo: ctaocrypt/src/$(am__dirstamp) \
 	ctaocrypt/src/$(DEPDIR)/$(am__dirstamp)
 ctaocrypt/src/src_libcyassl_la-asn.lo: ctaocrypt/src/$(am__dirstamp) \
+	ctaocrypt/src/$(DEPDIR)/$(am__dirstamp)
+ctaocrypt/src/src_libcyassl_la-fips.lo: ctaocrypt/src/$(am__dirstamp) \
+	ctaocrypt/src/$(DEPDIR)/$(am__dirstamp)
+ctaocrypt/src/src_libcyassl_la-fips_test.lo:  \
+	ctaocrypt/src/$(am__dirstamp) \
 	ctaocrypt/src/$(DEPDIR)/$(am__dirstamp)
 ctaocrypt/src/src_libcyassl_la-coding.lo:  \
 	ctaocrypt/src/$(am__dirstamp) \
@@ -1611,37 +1622,37 @@ tests/$(am__dirstamp):
 tests/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) tests/$(DEPDIR)
 	@: > tests/$(DEPDIR)/$(am__dirstamp)
-tests/tests_unit-unit.$(OBJEXT): tests/$(am__dirstamp) \
+tests/tests_unit_test-unit.$(OBJEXT): tests/$(am__dirstamp) \
 	tests/$(DEPDIR)/$(am__dirstamp)
-tests/tests_unit-api.$(OBJEXT): tests/$(am__dirstamp) \
+tests/tests_unit_test-api.$(OBJEXT): tests/$(am__dirstamp) \
 	tests/$(DEPDIR)/$(am__dirstamp)
-tests/tests_unit-suites.$(OBJEXT): tests/$(am__dirstamp) \
+tests/tests_unit_test-suites.$(OBJEXT): tests/$(am__dirstamp) \
 	tests/$(DEPDIR)/$(am__dirstamp)
-tests/tests_unit-hash.$(OBJEXT): tests/$(am__dirstamp) \
+tests/tests_unit_test-hash.$(OBJEXT): tests/$(am__dirstamp) \
 	tests/$(DEPDIR)/$(am__dirstamp)
-examples/client/tests_unit-client.$(OBJEXT):  \
+examples/client/tests_unit_test-client.$(OBJEXT):  \
 	examples/client/$(am__dirstamp) \
 	examples/client/$(DEPDIR)/$(am__dirstamp)
-examples/server/tests_unit-server.$(OBJEXT):  \
+examples/server/tests_unit_test-server.$(OBJEXT):  \
 	examples/server/$(am__dirstamp) \
 	examples/server/$(DEPDIR)/$(am__dirstamp)
 
-tests/unit$(EXEEXT): $(tests_unit_OBJECTS) $(tests_unit_DEPENDENCIES) $(EXTRA_tests_unit_DEPENDENCIES) tests/$(am__dirstamp)
-	@rm -f tests/unit$(EXEEXT)
-	$(AM_V_CCLD)$(tests_unit_LINK) $(tests_unit_OBJECTS) $(tests_unit_LDADD) $(LIBS)
-ctaocrypt/test/testsuite_testsuite-test.$(OBJEXT):  \
+tests/unit.test$(EXEEXT): $(tests_unit_test_OBJECTS) $(tests_unit_test_DEPENDENCIES) $(EXTRA_tests_unit_test_DEPENDENCIES) tests/$(am__dirstamp)
+	@rm -f tests/unit.test$(EXEEXT)
+	$(AM_V_CCLD)$(tests_unit_test_LINK) $(tests_unit_test_OBJECTS) $(tests_unit_test_LDADD) $(LIBS)
+ctaocrypt/test/testsuite_testsuite_test-test.$(OBJEXT):  \
 	ctaocrypt/test/$(am__dirstamp) \
 	ctaocrypt/test/$(DEPDIR)/$(am__dirstamp)
-examples/client/testsuite_testsuite-client.$(OBJEXT):  \
+examples/client/testsuite_testsuite_test-client.$(OBJEXT):  \
 	examples/client/$(am__dirstamp) \
 	examples/client/$(DEPDIR)/$(am__dirstamp)
-examples/echoclient/testsuite_testsuite-echoclient.$(OBJEXT):  \
+examples/echoclient/testsuite_testsuite_test-echoclient.$(OBJEXT):  \
 	examples/echoclient/$(am__dirstamp) \
 	examples/echoclient/$(DEPDIR)/$(am__dirstamp)
-examples/echoserver/testsuite_testsuite-echoserver.$(OBJEXT):  \
+examples/echoserver/testsuite_testsuite_test-echoserver.$(OBJEXT):  \
 	examples/echoserver/$(am__dirstamp) \
 	examples/echoserver/$(DEPDIR)/$(am__dirstamp)
-examples/server/testsuite_testsuite-server.$(OBJEXT):  \
+examples/server/testsuite_testsuite_test-server.$(OBJEXT):  \
 	examples/server/$(am__dirstamp) \
 	examples/server/$(DEPDIR)/$(am__dirstamp)
 testsuite/$(am__dirstamp):
@@ -1650,12 +1661,12 @@ testsuite/$(am__dirstamp):
 testsuite/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) testsuite/$(DEPDIR)
 	@: > testsuite/$(DEPDIR)/$(am__dirstamp)
-testsuite/testsuite_testsuite-testsuite.$(OBJEXT):  \
+testsuite/testsuite_testsuite_test-testsuite.$(OBJEXT):  \
 	testsuite/$(am__dirstamp) testsuite/$(DEPDIR)/$(am__dirstamp)
 
-testsuite/testsuite$(EXEEXT): $(testsuite_testsuite_OBJECTS) $(testsuite_testsuite_DEPENDENCIES) $(EXTRA_testsuite_testsuite_DEPENDENCIES) testsuite/$(am__dirstamp)
-	@rm -f testsuite/testsuite$(EXEEXT)
-	$(AM_V_CCLD)$(testsuite_testsuite_LINK) $(testsuite_testsuite_OBJECTS) $(testsuite_testsuite_LDADD) $(LIBS)
+testsuite/testsuite.test$(EXEEXT): $(testsuite_testsuite_test_OBJECTS) $(testsuite_testsuite_test_DEPENDENCIES) $(EXTRA_testsuite_testsuite_test_DEPENDENCIES) testsuite/$(am__dirstamp)
+	@rm -f testsuite/testsuite.test$(EXEEXT)
+	$(AM_V_CCLD)$(testsuite_testsuite_test_LINK) $(testsuite_testsuite_test_OBJECTS) $(testsuite_testsuite_test_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -1690,6 +1701,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@ctaocrypt/src/$(DEPDIR)/src_libcyassl_la-dsa.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@ctaocrypt/src/$(DEPDIR)/src_libcyassl_la-ecc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@ctaocrypt/src/$(DEPDIR)/src_libcyassl_la-error.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@ctaocrypt/src/$(DEPDIR)/src_libcyassl_la-fips.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@ctaocrypt/src/$(DEPDIR)/src_libcyassl_la-fips_test.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@ctaocrypt/src/$(DEPDIR)/src_libcyassl_la-hc128.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@ctaocrypt/src/$(DEPDIR)/src_libcyassl_la-hmac.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@ctaocrypt/src/$(DEPDIR)/src_libcyassl_la-integer.Plo@am__quote@
@@ -1711,17 +1724,17 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@ctaocrypt/src/$(DEPDIR)/src_libcyassl_la-sha512.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@ctaocrypt/src/$(DEPDIR)/src_libcyassl_la-tfm.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@ctaocrypt/test/$(DEPDIR)/test.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@ctaocrypt/test/$(DEPDIR)/testsuite_testsuite-test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@ctaocrypt/test/$(DEPDIR)/testsuite_testsuite_test-test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@examples/client/$(DEPDIR)/client.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@examples/client/$(DEPDIR)/tests_unit-client.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@examples/client/$(DEPDIR)/testsuite_testsuite-client.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@examples/client/$(DEPDIR)/tests_unit_test-client.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@examples/client/$(DEPDIR)/testsuite_testsuite_test-client.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@examples/echoclient/$(DEPDIR)/echoclient.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@examples/echoclient/$(DEPDIR)/testsuite_testsuite-echoclient.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@examples/echoclient/$(DEPDIR)/testsuite_testsuite_test-echoclient.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@examples/echoserver/$(DEPDIR)/echoserver.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@examples/echoserver/$(DEPDIR)/testsuite_testsuite-echoserver.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@examples/echoserver/$(DEPDIR)/testsuite_testsuite_test-echoserver.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@examples/server/$(DEPDIR)/server.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@examples/server/$(DEPDIR)/tests_unit-server.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@examples/server/$(DEPDIR)/testsuite_testsuite-server.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@examples/server/$(DEPDIR)/tests_unit_test-server.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@examples/server/$(DEPDIR)/testsuite_testsuite_test-server.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@mcapi/$(DEPDIR)/crypto.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@mcapi/$(DEPDIR)/mcapi_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/src_libcyassl_la-crl.Plo@am__quote@
@@ -1733,11 +1746,11 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/src_libcyassl_la-ssl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/src_libcyassl_la-tls.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@sslSniffer/sslSnifferTest/$(DEPDIR)/snifftest.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/tests_unit-api.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/tests_unit-hash.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/tests_unit-suites.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/tests_unit-unit.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@testsuite/$(DEPDIR)/testsuite_testsuite-testsuite.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/tests_unit_test-api.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/tests_unit_test-hash.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/tests_unit_test-suites.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/tests_unit_test-unit.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@testsuite/$(DEPDIR)/testsuite_testsuite_test-testsuite.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -1867,6 +1880,20 @@ ctaocrypt/src/src_libcyassl_la-asn.lo: ctaocrypt/src/asn.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctaocrypt/src/asn.c' object='ctaocrypt/src/src_libcyassl_la-asn.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_libcyassl_la_CPPFLAGS) $(CPPFLAGS) $(src_libcyassl_la_CFLAGS) $(CFLAGS) -c -o ctaocrypt/src/src_libcyassl_la-asn.lo `test -f 'ctaocrypt/src/asn.c' || echo '$(srcdir)/'`ctaocrypt/src/asn.c
+
+ctaocrypt/src/src_libcyassl_la-fips.lo: ctaocrypt/src/fips.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_libcyassl_la_CPPFLAGS) $(CPPFLAGS) $(src_libcyassl_la_CFLAGS) $(CFLAGS) -MT ctaocrypt/src/src_libcyassl_la-fips.lo -MD -MP -MF ctaocrypt/src/$(DEPDIR)/src_libcyassl_la-fips.Tpo -c -o ctaocrypt/src/src_libcyassl_la-fips.lo `test -f 'ctaocrypt/src/fips.c' || echo '$(srcdir)/'`ctaocrypt/src/fips.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ctaocrypt/src/$(DEPDIR)/src_libcyassl_la-fips.Tpo ctaocrypt/src/$(DEPDIR)/src_libcyassl_la-fips.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctaocrypt/src/fips.c' object='ctaocrypt/src/src_libcyassl_la-fips.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_libcyassl_la_CPPFLAGS) $(CPPFLAGS) $(src_libcyassl_la_CFLAGS) $(CFLAGS) -c -o ctaocrypt/src/src_libcyassl_la-fips.lo `test -f 'ctaocrypt/src/fips.c' || echo '$(srcdir)/'`ctaocrypt/src/fips.c
+
+ctaocrypt/src/src_libcyassl_la-fips_test.lo: ctaocrypt/src/fips_test.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_libcyassl_la_CPPFLAGS) $(CPPFLAGS) $(src_libcyassl_la_CFLAGS) $(CFLAGS) -MT ctaocrypt/src/src_libcyassl_la-fips_test.lo -MD -MP -MF ctaocrypt/src/$(DEPDIR)/src_libcyassl_la-fips_test.Tpo -c -o ctaocrypt/src/src_libcyassl_la-fips_test.lo `test -f 'ctaocrypt/src/fips_test.c' || echo '$(srcdir)/'`ctaocrypt/src/fips_test.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ctaocrypt/src/$(DEPDIR)/src_libcyassl_la-fips_test.Tpo ctaocrypt/src/$(DEPDIR)/src_libcyassl_la-fips_test.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctaocrypt/src/fips_test.c' object='ctaocrypt/src/src_libcyassl_la-fips_test.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_libcyassl_la_CPPFLAGS) $(CPPFLAGS) $(src_libcyassl_la_CFLAGS) $(CFLAGS) -c -o ctaocrypt/src/src_libcyassl_la-fips_test.lo `test -f 'ctaocrypt/src/fips_test.c' || echo '$(srcdir)/'`ctaocrypt/src/fips_test.c
 
 ctaocrypt/src/src_libcyassl_la-coding.lo: ctaocrypt/src/coding.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_libcyassl_la_CPPFLAGS) $(CPPFLAGS) $(src_libcyassl_la_CFLAGS) $(CFLAGS) -MT ctaocrypt/src/src_libcyassl_la-coding.lo -MD -MP -MF ctaocrypt/src/$(DEPDIR)/src_libcyassl_la-coding.Tpo -c -o ctaocrypt/src/src_libcyassl_la-coding.lo `test -f 'ctaocrypt/src/coding.c' || echo '$(srcdir)/'`ctaocrypt/src/coding.c
@@ -2043,173 +2070,173 @@ ctaocrypt/src/src_libcyassl_la-pkcs7.lo: ctaocrypt/src/pkcs7.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(src_libcyassl_la_CPPFLAGS) $(CPPFLAGS) $(src_libcyassl_la_CFLAGS) $(CFLAGS) -c -o ctaocrypt/src/src_libcyassl_la-pkcs7.lo `test -f 'ctaocrypt/src/pkcs7.c' || echo '$(srcdir)/'`ctaocrypt/src/pkcs7.c
 
-tests/tests_unit-unit.o: tests/unit.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_CFLAGS) $(CFLAGS) -MT tests/tests_unit-unit.o -MD -MP -MF tests/$(DEPDIR)/tests_unit-unit.Tpo -c -o tests/tests_unit-unit.o `test -f 'tests/unit.c' || echo '$(srcdir)/'`tests/unit.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/tests_unit-unit.Tpo tests/$(DEPDIR)/tests_unit-unit.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tests/unit.c' object='tests/tests_unit-unit.o' libtool=no @AMDEPBACKSLASH@
+tests/tests_unit_test-unit.o: tests/unit.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_test_CFLAGS) $(CFLAGS) -MT tests/tests_unit_test-unit.o -MD -MP -MF tests/$(DEPDIR)/tests_unit_test-unit.Tpo -c -o tests/tests_unit_test-unit.o `test -f 'tests/unit.c' || echo '$(srcdir)/'`tests/unit.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/tests_unit_test-unit.Tpo tests/$(DEPDIR)/tests_unit_test-unit.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tests/unit.c' object='tests/tests_unit_test-unit.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_CFLAGS) $(CFLAGS) -c -o tests/tests_unit-unit.o `test -f 'tests/unit.c' || echo '$(srcdir)/'`tests/unit.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_test_CFLAGS) $(CFLAGS) -c -o tests/tests_unit_test-unit.o `test -f 'tests/unit.c' || echo '$(srcdir)/'`tests/unit.c
 
-tests/tests_unit-unit.obj: tests/unit.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_CFLAGS) $(CFLAGS) -MT tests/tests_unit-unit.obj -MD -MP -MF tests/$(DEPDIR)/tests_unit-unit.Tpo -c -o tests/tests_unit-unit.obj `if test -f 'tests/unit.c'; then $(CYGPATH_W) 'tests/unit.c'; else $(CYGPATH_W) '$(srcdir)/tests/unit.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/tests_unit-unit.Tpo tests/$(DEPDIR)/tests_unit-unit.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tests/unit.c' object='tests/tests_unit-unit.obj' libtool=no @AMDEPBACKSLASH@
+tests/tests_unit_test-unit.obj: tests/unit.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_test_CFLAGS) $(CFLAGS) -MT tests/tests_unit_test-unit.obj -MD -MP -MF tests/$(DEPDIR)/tests_unit_test-unit.Tpo -c -o tests/tests_unit_test-unit.obj `if test -f 'tests/unit.c'; then $(CYGPATH_W) 'tests/unit.c'; else $(CYGPATH_W) '$(srcdir)/tests/unit.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/tests_unit_test-unit.Tpo tests/$(DEPDIR)/tests_unit_test-unit.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tests/unit.c' object='tests/tests_unit_test-unit.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_CFLAGS) $(CFLAGS) -c -o tests/tests_unit-unit.obj `if test -f 'tests/unit.c'; then $(CYGPATH_W) 'tests/unit.c'; else $(CYGPATH_W) '$(srcdir)/tests/unit.c'; fi`
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_test_CFLAGS) $(CFLAGS) -c -o tests/tests_unit_test-unit.obj `if test -f 'tests/unit.c'; then $(CYGPATH_W) 'tests/unit.c'; else $(CYGPATH_W) '$(srcdir)/tests/unit.c'; fi`
 
-tests/tests_unit-api.o: tests/api.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_CFLAGS) $(CFLAGS) -MT tests/tests_unit-api.o -MD -MP -MF tests/$(DEPDIR)/tests_unit-api.Tpo -c -o tests/tests_unit-api.o `test -f 'tests/api.c' || echo '$(srcdir)/'`tests/api.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/tests_unit-api.Tpo tests/$(DEPDIR)/tests_unit-api.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tests/api.c' object='tests/tests_unit-api.o' libtool=no @AMDEPBACKSLASH@
+tests/tests_unit_test-api.o: tests/api.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_test_CFLAGS) $(CFLAGS) -MT tests/tests_unit_test-api.o -MD -MP -MF tests/$(DEPDIR)/tests_unit_test-api.Tpo -c -o tests/tests_unit_test-api.o `test -f 'tests/api.c' || echo '$(srcdir)/'`tests/api.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/tests_unit_test-api.Tpo tests/$(DEPDIR)/tests_unit_test-api.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tests/api.c' object='tests/tests_unit_test-api.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_CFLAGS) $(CFLAGS) -c -o tests/tests_unit-api.o `test -f 'tests/api.c' || echo '$(srcdir)/'`tests/api.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_test_CFLAGS) $(CFLAGS) -c -o tests/tests_unit_test-api.o `test -f 'tests/api.c' || echo '$(srcdir)/'`tests/api.c
 
-tests/tests_unit-api.obj: tests/api.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_CFLAGS) $(CFLAGS) -MT tests/tests_unit-api.obj -MD -MP -MF tests/$(DEPDIR)/tests_unit-api.Tpo -c -o tests/tests_unit-api.obj `if test -f 'tests/api.c'; then $(CYGPATH_W) 'tests/api.c'; else $(CYGPATH_W) '$(srcdir)/tests/api.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/tests_unit-api.Tpo tests/$(DEPDIR)/tests_unit-api.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tests/api.c' object='tests/tests_unit-api.obj' libtool=no @AMDEPBACKSLASH@
+tests/tests_unit_test-api.obj: tests/api.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_test_CFLAGS) $(CFLAGS) -MT tests/tests_unit_test-api.obj -MD -MP -MF tests/$(DEPDIR)/tests_unit_test-api.Tpo -c -o tests/tests_unit_test-api.obj `if test -f 'tests/api.c'; then $(CYGPATH_W) 'tests/api.c'; else $(CYGPATH_W) '$(srcdir)/tests/api.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/tests_unit_test-api.Tpo tests/$(DEPDIR)/tests_unit_test-api.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tests/api.c' object='tests/tests_unit_test-api.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_CFLAGS) $(CFLAGS) -c -o tests/tests_unit-api.obj `if test -f 'tests/api.c'; then $(CYGPATH_W) 'tests/api.c'; else $(CYGPATH_W) '$(srcdir)/tests/api.c'; fi`
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_test_CFLAGS) $(CFLAGS) -c -o tests/tests_unit_test-api.obj `if test -f 'tests/api.c'; then $(CYGPATH_W) 'tests/api.c'; else $(CYGPATH_W) '$(srcdir)/tests/api.c'; fi`
 
-tests/tests_unit-suites.o: tests/suites.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_CFLAGS) $(CFLAGS) -MT tests/tests_unit-suites.o -MD -MP -MF tests/$(DEPDIR)/tests_unit-suites.Tpo -c -o tests/tests_unit-suites.o `test -f 'tests/suites.c' || echo '$(srcdir)/'`tests/suites.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/tests_unit-suites.Tpo tests/$(DEPDIR)/tests_unit-suites.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tests/suites.c' object='tests/tests_unit-suites.o' libtool=no @AMDEPBACKSLASH@
+tests/tests_unit_test-suites.o: tests/suites.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_test_CFLAGS) $(CFLAGS) -MT tests/tests_unit_test-suites.o -MD -MP -MF tests/$(DEPDIR)/tests_unit_test-suites.Tpo -c -o tests/tests_unit_test-suites.o `test -f 'tests/suites.c' || echo '$(srcdir)/'`tests/suites.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/tests_unit_test-suites.Tpo tests/$(DEPDIR)/tests_unit_test-suites.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tests/suites.c' object='tests/tests_unit_test-suites.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_CFLAGS) $(CFLAGS) -c -o tests/tests_unit-suites.o `test -f 'tests/suites.c' || echo '$(srcdir)/'`tests/suites.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_test_CFLAGS) $(CFLAGS) -c -o tests/tests_unit_test-suites.o `test -f 'tests/suites.c' || echo '$(srcdir)/'`tests/suites.c
 
-tests/tests_unit-suites.obj: tests/suites.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_CFLAGS) $(CFLAGS) -MT tests/tests_unit-suites.obj -MD -MP -MF tests/$(DEPDIR)/tests_unit-suites.Tpo -c -o tests/tests_unit-suites.obj `if test -f 'tests/suites.c'; then $(CYGPATH_W) 'tests/suites.c'; else $(CYGPATH_W) '$(srcdir)/tests/suites.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/tests_unit-suites.Tpo tests/$(DEPDIR)/tests_unit-suites.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tests/suites.c' object='tests/tests_unit-suites.obj' libtool=no @AMDEPBACKSLASH@
+tests/tests_unit_test-suites.obj: tests/suites.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_test_CFLAGS) $(CFLAGS) -MT tests/tests_unit_test-suites.obj -MD -MP -MF tests/$(DEPDIR)/tests_unit_test-suites.Tpo -c -o tests/tests_unit_test-suites.obj `if test -f 'tests/suites.c'; then $(CYGPATH_W) 'tests/suites.c'; else $(CYGPATH_W) '$(srcdir)/tests/suites.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/tests_unit_test-suites.Tpo tests/$(DEPDIR)/tests_unit_test-suites.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tests/suites.c' object='tests/tests_unit_test-suites.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_CFLAGS) $(CFLAGS) -c -o tests/tests_unit-suites.obj `if test -f 'tests/suites.c'; then $(CYGPATH_W) 'tests/suites.c'; else $(CYGPATH_W) '$(srcdir)/tests/suites.c'; fi`
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_test_CFLAGS) $(CFLAGS) -c -o tests/tests_unit_test-suites.obj `if test -f 'tests/suites.c'; then $(CYGPATH_W) 'tests/suites.c'; else $(CYGPATH_W) '$(srcdir)/tests/suites.c'; fi`
 
-tests/tests_unit-hash.o: tests/hash.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_CFLAGS) $(CFLAGS) -MT tests/tests_unit-hash.o -MD -MP -MF tests/$(DEPDIR)/tests_unit-hash.Tpo -c -o tests/tests_unit-hash.o `test -f 'tests/hash.c' || echo '$(srcdir)/'`tests/hash.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/tests_unit-hash.Tpo tests/$(DEPDIR)/tests_unit-hash.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tests/hash.c' object='tests/tests_unit-hash.o' libtool=no @AMDEPBACKSLASH@
+tests/tests_unit_test-hash.o: tests/hash.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_test_CFLAGS) $(CFLAGS) -MT tests/tests_unit_test-hash.o -MD -MP -MF tests/$(DEPDIR)/tests_unit_test-hash.Tpo -c -o tests/tests_unit_test-hash.o `test -f 'tests/hash.c' || echo '$(srcdir)/'`tests/hash.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/tests_unit_test-hash.Tpo tests/$(DEPDIR)/tests_unit_test-hash.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tests/hash.c' object='tests/tests_unit_test-hash.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_CFLAGS) $(CFLAGS) -c -o tests/tests_unit-hash.o `test -f 'tests/hash.c' || echo '$(srcdir)/'`tests/hash.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_test_CFLAGS) $(CFLAGS) -c -o tests/tests_unit_test-hash.o `test -f 'tests/hash.c' || echo '$(srcdir)/'`tests/hash.c
 
-tests/tests_unit-hash.obj: tests/hash.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_CFLAGS) $(CFLAGS) -MT tests/tests_unit-hash.obj -MD -MP -MF tests/$(DEPDIR)/tests_unit-hash.Tpo -c -o tests/tests_unit-hash.obj `if test -f 'tests/hash.c'; then $(CYGPATH_W) 'tests/hash.c'; else $(CYGPATH_W) '$(srcdir)/tests/hash.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/tests_unit-hash.Tpo tests/$(DEPDIR)/tests_unit-hash.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tests/hash.c' object='tests/tests_unit-hash.obj' libtool=no @AMDEPBACKSLASH@
+tests/tests_unit_test-hash.obj: tests/hash.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_test_CFLAGS) $(CFLAGS) -MT tests/tests_unit_test-hash.obj -MD -MP -MF tests/$(DEPDIR)/tests_unit_test-hash.Tpo -c -o tests/tests_unit_test-hash.obj `if test -f 'tests/hash.c'; then $(CYGPATH_W) 'tests/hash.c'; else $(CYGPATH_W) '$(srcdir)/tests/hash.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/tests_unit_test-hash.Tpo tests/$(DEPDIR)/tests_unit_test-hash.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tests/hash.c' object='tests/tests_unit_test-hash.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_CFLAGS) $(CFLAGS) -c -o tests/tests_unit-hash.obj `if test -f 'tests/hash.c'; then $(CYGPATH_W) 'tests/hash.c'; else $(CYGPATH_W) '$(srcdir)/tests/hash.c'; fi`
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_test_CFLAGS) $(CFLAGS) -c -o tests/tests_unit_test-hash.obj `if test -f 'tests/hash.c'; then $(CYGPATH_W) 'tests/hash.c'; else $(CYGPATH_W) '$(srcdir)/tests/hash.c'; fi`
 
-examples/client/tests_unit-client.o: examples/client/client.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_CFLAGS) $(CFLAGS) -MT examples/client/tests_unit-client.o -MD -MP -MF examples/client/$(DEPDIR)/tests_unit-client.Tpo -c -o examples/client/tests_unit-client.o `test -f 'examples/client/client.c' || echo '$(srcdir)/'`examples/client/client.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) examples/client/$(DEPDIR)/tests_unit-client.Tpo examples/client/$(DEPDIR)/tests_unit-client.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='examples/client/client.c' object='examples/client/tests_unit-client.o' libtool=no @AMDEPBACKSLASH@
+examples/client/tests_unit_test-client.o: examples/client/client.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_test_CFLAGS) $(CFLAGS) -MT examples/client/tests_unit_test-client.o -MD -MP -MF examples/client/$(DEPDIR)/tests_unit_test-client.Tpo -c -o examples/client/tests_unit_test-client.o `test -f 'examples/client/client.c' || echo '$(srcdir)/'`examples/client/client.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) examples/client/$(DEPDIR)/tests_unit_test-client.Tpo examples/client/$(DEPDIR)/tests_unit_test-client.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='examples/client/client.c' object='examples/client/tests_unit_test-client.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_CFLAGS) $(CFLAGS) -c -o examples/client/tests_unit-client.o `test -f 'examples/client/client.c' || echo '$(srcdir)/'`examples/client/client.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_test_CFLAGS) $(CFLAGS) -c -o examples/client/tests_unit_test-client.o `test -f 'examples/client/client.c' || echo '$(srcdir)/'`examples/client/client.c
 
-examples/client/tests_unit-client.obj: examples/client/client.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_CFLAGS) $(CFLAGS) -MT examples/client/tests_unit-client.obj -MD -MP -MF examples/client/$(DEPDIR)/tests_unit-client.Tpo -c -o examples/client/tests_unit-client.obj `if test -f 'examples/client/client.c'; then $(CYGPATH_W) 'examples/client/client.c'; else $(CYGPATH_W) '$(srcdir)/examples/client/client.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) examples/client/$(DEPDIR)/tests_unit-client.Tpo examples/client/$(DEPDIR)/tests_unit-client.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='examples/client/client.c' object='examples/client/tests_unit-client.obj' libtool=no @AMDEPBACKSLASH@
+examples/client/tests_unit_test-client.obj: examples/client/client.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_test_CFLAGS) $(CFLAGS) -MT examples/client/tests_unit_test-client.obj -MD -MP -MF examples/client/$(DEPDIR)/tests_unit_test-client.Tpo -c -o examples/client/tests_unit_test-client.obj `if test -f 'examples/client/client.c'; then $(CYGPATH_W) 'examples/client/client.c'; else $(CYGPATH_W) '$(srcdir)/examples/client/client.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) examples/client/$(DEPDIR)/tests_unit_test-client.Tpo examples/client/$(DEPDIR)/tests_unit_test-client.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='examples/client/client.c' object='examples/client/tests_unit_test-client.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_CFLAGS) $(CFLAGS) -c -o examples/client/tests_unit-client.obj `if test -f 'examples/client/client.c'; then $(CYGPATH_W) 'examples/client/client.c'; else $(CYGPATH_W) '$(srcdir)/examples/client/client.c'; fi`
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_test_CFLAGS) $(CFLAGS) -c -o examples/client/tests_unit_test-client.obj `if test -f 'examples/client/client.c'; then $(CYGPATH_W) 'examples/client/client.c'; else $(CYGPATH_W) '$(srcdir)/examples/client/client.c'; fi`
 
-examples/server/tests_unit-server.o: examples/server/server.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_CFLAGS) $(CFLAGS) -MT examples/server/tests_unit-server.o -MD -MP -MF examples/server/$(DEPDIR)/tests_unit-server.Tpo -c -o examples/server/tests_unit-server.o `test -f 'examples/server/server.c' || echo '$(srcdir)/'`examples/server/server.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) examples/server/$(DEPDIR)/tests_unit-server.Tpo examples/server/$(DEPDIR)/tests_unit-server.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='examples/server/server.c' object='examples/server/tests_unit-server.o' libtool=no @AMDEPBACKSLASH@
+examples/server/tests_unit_test-server.o: examples/server/server.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_test_CFLAGS) $(CFLAGS) -MT examples/server/tests_unit_test-server.o -MD -MP -MF examples/server/$(DEPDIR)/tests_unit_test-server.Tpo -c -o examples/server/tests_unit_test-server.o `test -f 'examples/server/server.c' || echo '$(srcdir)/'`examples/server/server.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) examples/server/$(DEPDIR)/tests_unit_test-server.Tpo examples/server/$(DEPDIR)/tests_unit_test-server.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='examples/server/server.c' object='examples/server/tests_unit_test-server.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_CFLAGS) $(CFLAGS) -c -o examples/server/tests_unit-server.o `test -f 'examples/server/server.c' || echo '$(srcdir)/'`examples/server/server.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_test_CFLAGS) $(CFLAGS) -c -o examples/server/tests_unit_test-server.o `test -f 'examples/server/server.c' || echo '$(srcdir)/'`examples/server/server.c
 
-examples/server/tests_unit-server.obj: examples/server/server.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_CFLAGS) $(CFLAGS) -MT examples/server/tests_unit-server.obj -MD -MP -MF examples/server/$(DEPDIR)/tests_unit-server.Tpo -c -o examples/server/tests_unit-server.obj `if test -f 'examples/server/server.c'; then $(CYGPATH_W) 'examples/server/server.c'; else $(CYGPATH_W) '$(srcdir)/examples/server/server.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) examples/server/$(DEPDIR)/tests_unit-server.Tpo examples/server/$(DEPDIR)/tests_unit-server.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='examples/server/server.c' object='examples/server/tests_unit-server.obj' libtool=no @AMDEPBACKSLASH@
+examples/server/tests_unit_test-server.obj: examples/server/server.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_test_CFLAGS) $(CFLAGS) -MT examples/server/tests_unit_test-server.obj -MD -MP -MF examples/server/$(DEPDIR)/tests_unit_test-server.Tpo -c -o examples/server/tests_unit_test-server.obj `if test -f 'examples/server/server.c'; then $(CYGPATH_W) 'examples/server/server.c'; else $(CYGPATH_W) '$(srcdir)/examples/server/server.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) examples/server/$(DEPDIR)/tests_unit_test-server.Tpo examples/server/$(DEPDIR)/tests_unit_test-server.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='examples/server/server.c' object='examples/server/tests_unit_test-server.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_CFLAGS) $(CFLAGS) -c -o examples/server/tests_unit-server.obj `if test -f 'examples/server/server.c'; then $(CYGPATH_W) 'examples/server/server.c'; else $(CYGPATH_W) '$(srcdir)/examples/server/server.c'; fi`
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tests_unit_test_CFLAGS) $(CFLAGS) -c -o examples/server/tests_unit_test-server.obj `if test -f 'examples/server/server.c'; then $(CYGPATH_W) 'examples/server/server.c'; else $(CYGPATH_W) '$(srcdir)/examples/server/server.c'; fi`
 
-ctaocrypt/test/testsuite_testsuite-test.o: ctaocrypt/test/test.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_CFLAGS) $(CFLAGS) -MT ctaocrypt/test/testsuite_testsuite-test.o -MD -MP -MF ctaocrypt/test/$(DEPDIR)/testsuite_testsuite-test.Tpo -c -o ctaocrypt/test/testsuite_testsuite-test.o `test -f 'ctaocrypt/test/test.c' || echo '$(srcdir)/'`ctaocrypt/test/test.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ctaocrypt/test/$(DEPDIR)/testsuite_testsuite-test.Tpo ctaocrypt/test/$(DEPDIR)/testsuite_testsuite-test.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctaocrypt/test/test.c' object='ctaocrypt/test/testsuite_testsuite-test.o' libtool=no @AMDEPBACKSLASH@
+ctaocrypt/test/testsuite_testsuite_test-test.o: ctaocrypt/test/test.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_test_CFLAGS) $(CFLAGS) -MT ctaocrypt/test/testsuite_testsuite_test-test.o -MD -MP -MF ctaocrypt/test/$(DEPDIR)/testsuite_testsuite_test-test.Tpo -c -o ctaocrypt/test/testsuite_testsuite_test-test.o `test -f 'ctaocrypt/test/test.c' || echo '$(srcdir)/'`ctaocrypt/test/test.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ctaocrypt/test/$(DEPDIR)/testsuite_testsuite_test-test.Tpo ctaocrypt/test/$(DEPDIR)/testsuite_testsuite_test-test.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctaocrypt/test/test.c' object='ctaocrypt/test/testsuite_testsuite_test-test.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_CFLAGS) $(CFLAGS) -c -o ctaocrypt/test/testsuite_testsuite-test.o `test -f 'ctaocrypt/test/test.c' || echo '$(srcdir)/'`ctaocrypt/test/test.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_test_CFLAGS) $(CFLAGS) -c -o ctaocrypt/test/testsuite_testsuite_test-test.o `test -f 'ctaocrypt/test/test.c' || echo '$(srcdir)/'`ctaocrypt/test/test.c
 
-ctaocrypt/test/testsuite_testsuite-test.obj: ctaocrypt/test/test.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_CFLAGS) $(CFLAGS) -MT ctaocrypt/test/testsuite_testsuite-test.obj -MD -MP -MF ctaocrypt/test/$(DEPDIR)/testsuite_testsuite-test.Tpo -c -o ctaocrypt/test/testsuite_testsuite-test.obj `if test -f 'ctaocrypt/test/test.c'; then $(CYGPATH_W) 'ctaocrypt/test/test.c'; else $(CYGPATH_W) '$(srcdir)/ctaocrypt/test/test.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ctaocrypt/test/$(DEPDIR)/testsuite_testsuite-test.Tpo ctaocrypt/test/$(DEPDIR)/testsuite_testsuite-test.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctaocrypt/test/test.c' object='ctaocrypt/test/testsuite_testsuite-test.obj' libtool=no @AMDEPBACKSLASH@
+ctaocrypt/test/testsuite_testsuite_test-test.obj: ctaocrypt/test/test.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_test_CFLAGS) $(CFLAGS) -MT ctaocrypt/test/testsuite_testsuite_test-test.obj -MD -MP -MF ctaocrypt/test/$(DEPDIR)/testsuite_testsuite_test-test.Tpo -c -o ctaocrypt/test/testsuite_testsuite_test-test.obj `if test -f 'ctaocrypt/test/test.c'; then $(CYGPATH_W) 'ctaocrypt/test/test.c'; else $(CYGPATH_W) '$(srcdir)/ctaocrypt/test/test.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) ctaocrypt/test/$(DEPDIR)/testsuite_testsuite_test-test.Tpo ctaocrypt/test/$(DEPDIR)/testsuite_testsuite_test-test.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ctaocrypt/test/test.c' object='ctaocrypt/test/testsuite_testsuite_test-test.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_CFLAGS) $(CFLAGS) -c -o ctaocrypt/test/testsuite_testsuite-test.obj `if test -f 'ctaocrypt/test/test.c'; then $(CYGPATH_W) 'ctaocrypt/test/test.c'; else $(CYGPATH_W) '$(srcdir)/ctaocrypt/test/test.c'; fi`
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_test_CFLAGS) $(CFLAGS) -c -o ctaocrypt/test/testsuite_testsuite_test-test.obj `if test -f 'ctaocrypt/test/test.c'; then $(CYGPATH_W) 'ctaocrypt/test/test.c'; else $(CYGPATH_W) '$(srcdir)/ctaocrypt/test/test.c'; fi`
 
-examples/client/testsuite_testsuite-client.o: examples/client/client.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_CFLAGS) $(CFLAGS) -MT examples/client/testsuite_testsuite-client.o -MD -MP -MF examples/client/$(DEPDIR)/testsuite_testsuite-client.Tpo -c -o examples/client/testsuite_testsuite-client.o `test -f 'examples/client/client.c' || echo '$(srcdir)/'`examples/client/client.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) examples/client/$(DEPDIR)/testsuite_testsuite-client.Tpo examples/client/$(DEPDIR)/testsuite_testsuite-client.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='examples/client/client.c' object='examples/client/testsuite_testsuite-client.o' libtool=no @AMDEPBACKSLASH@
+examples/client/testsuite_testsuite_test-client.o: examples/client/client.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_test_CFLAGS) $(CFLAGS) -MT examples/client/testsuite_testsuite_test-client.o -MD -MP -MF examples/client/$(DEPDIR)/testsuite_testsuite_test-client.Tpo -c -o examples/client/testsuite_testsuite_test-client.o `test -f 'examples/client/client.c' || echo '$(srcdir)/'`examples/client/client.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) examples/client/$(DEPDIR)/testsuite_testsuite_test-client.Tpo examples/client/$(DEPDIR)/testsuite_testsuite_test-client.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='examples/client/client.c' object='examples/client/testsuite_testsuite_test-client.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_CFLAGS) $(CFLAGS) -c -o examples/client/testsuite_testsuite-client.o `test -f 'examples/client/client.c' || echo '$(srcdir)/'`examples/client/client.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_test_CFLAGS) $(CFLAGS) -c -o examples/client/testsuite_testsuite_test-client.o `test -f 'examples/client/client.c' || echo '$(srcdir)/'`examples/client/client.c
 
-examples/client/testsuite_testsuite-client.obj: examples/client/client.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_CFLAGS) $(CFLAGS) -MT examples/client/testsuite_testsuite-client.obj -MD -MP -MF examples/client/$(DEPDIR)/testsuite_testsuite-client.Tpo -c -o examples/client/testsuite_testsuite-client.obj `if test -f 'examples/client/client.c'; then $(CYGPATH_W) 'examples/client/client.c'; else $(CYGPATH_W) '$(srcdir)/examples/client/client.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) examples/client/$(DEPDIR)/testsuite_testsuite-client.Tpo examples/client/$(DEPDIR)/testsuite_testsuite-client.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='examples/client/client.c' object='examples/client/testsuite_testsuite-client.obj' libtool=no @AMDEPBACKSLASH@
+examples/client/testsuite_testsuite_test-client.obj: examples/client/client.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_test_CFLAGS) $(CFLAGS) -MT examples/client/testsuite_testsuite_test-client.obj -MD -MP -MF examples/client/$(DEPDIR)/testsuite_testsuite_test-client.Tpo -c -o examples/client/testsuite_testsuite_test-client.obj `if test -f 'examples/client/client.c'; then $(CYGPATH_W) 'examples/client/client.c'; else $(CYGPATH_W) '$(srcdir)/examples/client/client.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) examples/client/$(DEPDIR)/testsuite_testsuite_test-client.Tpo examples/client/$(DEPDIR)/testsuite_testsuite_test-client.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='examples/client/client.c' object='examples/client/testsuite_testsuite_test-client.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_CFLAGS) $(CFLAGS) -c -o examples/client/testsuite_testsuite-client.obj `if test -f 'examples/client/client.c'; then $(CYGPATH_W) 'examples/client/client.c'; else $(CYGPATH_W) '$(srcdir)/examples/client/client.c'; fi`
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_test_CFLAGS) $(CFLAGS) -c -o examples/client/testsuite_testsuite_test-client.obj `if test -f 'examples/client/client.c'; then $(CYGPATH_W) 'examples/client/client.c'; else $(CYGPATH_W) '$(srcdir)/examples/client/client.c'; fi`
 
-examples/echoclient/testsuite_testsuite-echoclient.o: examples/echoclient/echoclient.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_CFLAGS) $(CFLAGS) -MT examples/echoclient/testsuite_testsuite-echoclient.o -MD -MP -MF examples/echoclient/$(DEPDIR)/testsuite_testsuite-echoclient.Tpo -c -o examples/echoclient/testsuite_testsuite-echoclient.o `test -f 'examples/echoclient/echoclient.c' || echo '$(srcdir)/'`examples/echoclient/echoclient.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) examples/echoclient/$(DEPDIR)/testsuite_testsuite-echoclient.Tpo examples/echoclient/$(DEPDIR)/testsuite_testsuite-echoclient.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='examples/echoclient/echoclient.c' object='examples/echoclient/testsuite_testsuite-echoclient.o' libtool=no @AMDEPBACKSLASH@
+examples/echoclient/testsuite_testsuite_test-echoclient.o: examples/echoclient/echoclient.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_test_CFLAGS) $(CFLAGS) -MT examples/echoclient/testsuite_testsuite_test-echoclient.o -MD -MP -MF examples/echoclient/$(DEPDIR)/testsuite_testsuite_test-echoclient.Tpo -c -o examples/echoclient/testsuite_testsuite_test-echoclient.o `test -f 'examples/echoclient/echoclient.c' || echo '$(srcdir)/'`examples/echoclient/echoclient.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) examples/echoclient/$(DEPDIR)/testsuite_testsuite_test-echoclient.Tpo examples/echoclient/$(DEPDIR)/testsuite_testsuite_test-echoclient.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='examples/echoclient/echoclient.c' object='examples/echoclient/testsuite_testsuite_test-echoclient.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_CFLAGS) $(CFLAGS) -c -o examples/echoclient/testsuite_testsuite-echoclient.o `test -f 'examples/echoclient/echoclient.c' || echo '$(srcdir)/'`examples/echoclient/echoclient.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_test_CFLAGS) $(CFLAGS) -c -o examples/echoclient/testsuite_testsuite_test-echoclient.o `test -f 'examples/echoclient/echoclient.c' || echo '$(srcdir)/'`examples/echoclient/echoclient.c
 
-examples/echoclient/testsuite_testsuite-echoclient.obj: examples/echoclient/echoclient.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_CFLAGS) $(CFLAGS) -MT examples/echoclient/testsuite_testsuite-echoclient.obj -MD -MP -MF examples/echoclient/$(DEPDIR)/testsuite_testsuite-echoclient.Tpo -c -o examples/echoclient/testsuite_testsuite-echoclient.obj `if test -f 'examples/echoclient/echoclient.c'; then $(CYGPATH_W) 'examples/echoclient/echoclient.c'; else $(CYGPATH_W) '$(srcdir)/examples/echoclient/echoclient.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) examples/echoclient/$(DEPDIR)/testsuite_testsuite-echoclient.Tpo examples/echoclient/$(DEPDIR)/testsuite_testsuite-echoclient.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='examples/echoclient/echoclient.c' object='examples/echoclient/testsuite_testsuite-echoclient.obj' libtool=no @AMDEPBACKSLASH@
+examples/echoclient/testsuite_testsuite_test-echoclient.obj: examples/echoclient/echoclient.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_test_CFLAGS) $(CFLAGS) -MT examples/echoclient/testsuite_testsuite_test-echoclient.obj -MD -MP -MF examples/echoclient/$(DEPDIR)/testsuite_testsuite_test-echoclient.Tpo -c -o examples/echoclient/testsuite_testsuite_test-echoclient.obj `if test -f 'examples/echoclient/echoclient.c'; then $(CYGPATH_W) 'examples/echoclient/echoclient.c'; else $(CYGPATH_W) '$(srcdir)/examples/echoclient/echoclient.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) examples/echoclient/$(DEPDIR)/testsuite_testsuite_test-echoclient.Tpo examples/echoclient/$(DEPDIR)/testsuite_testsuite_test-echoclient.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='examples/echoclient/echoclient.c' object='examples/echoclient/testsuite_testsuite_test-echoclient.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_CFLAGS) $(CFLAGS) -c -o examples/echoclient/testsuite_testsuite-echoclient.obj `if test -f 'examples/echoclient/echoclient.c'; then $(CYGPATH_W) 'examples/echoclient/echoclient.c'; else $(CYGPATH_W) '$(srcdir)/examples/echoclient/echoclient.c'; fi`
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_test_CFLAGS) $(CFLAGS) -c -o examples/echoclient/testsuite_testsuite_test-echoclient.obj `if test -f 'examples/echoclient/echoclient.c'; then $(CYGPATH_W) 'examples/echoclient/echoclient.c'; else $(CYGPATH_W) '$(srcdir)/examples/echoclient/echoclient.c'; fi`
 
-examples/echoserver/testsuite_testsuite-echoserver.o: examples/echoserver/echoserver.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_CFLAGS) $(CFLAGS) -MT examples/echoserver/testsuite_testsuite-echoserver.o -MD -MP -MF examples/echoserver/$(DEPDIR)/testsuite_testsuite-echoserver.Tpo -c -o examples/echoserver/testsuite_testsuite-echoserver.o `test -f 'examples/echoserver/echoserver.c' || echo '$(srcdir)/'`examples/echoserver/echoserver.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) examples/echoserver/$(DEPDIR)/testsuite_testsuite-echoserver.Tpo examples/echoserver/$(DEPDIR)/testsuite_testsuite-echoserver.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='examples/echoserver/echoserver.c' object='examples/echoserver/testsuite_testsuite-echoserver.o' libtool=no @AMDEPBACKSLASH@
+examples/echoserver/testsuite_testsuite_test-echoserver.o: examples/echoserver/echoserver.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_test_CFLAGS) $(CFLAGS) -MT examples/echoserver/testsuite_testsuite_test-echoserver.o -MD -MP -MF examples/echoserver/$(DEPDIR)/testsuite_testsuite_test-echoserver.Tpo -c -o examples/echoserver/testsuite_testsuite_test-echoserver.o `test -f 'examples/echoserver/echoserver.c' || echo '$(srcdir)/'`examples/echoserver/echoserver.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) examples/echoserver/$(DEPDIR)/testsuite_testsuite_test-echoserver.Tpo examples/echoserver/$(DEPDIR)/testsuite_testsuite_test-echoserver.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='examples/echoserver/echoserver.c' object='examples/echoserver/testsuite_testsuite_test-echoserver.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_CFLAGS) $(CFLAGS) -c -o examples/echoserver/testsuite_testsuite-echoserver.o `test -f 'examples/echoserver/echoserver.c' || echo '$(srcdir)/'`examples/echoserver/echoserver.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_test_CFLAGS) $(CFLAGS) -c -o examples/echoserver/testsuite_testsuite_test-echoserver.o `test -f 'examples/echoserver/echoserver.c' || echo '$(srcdir)/'`examples/echoserver/echoserver.c
 
-examples/echoserver/testsuite_testsuite-echoserver.obj: examples/echoserver/echoserver.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_CFLAGS) $(CFLAGS) -MT examples/echoserver/testsuite_testsuite-echoserver.obj -MD -MP -MF examples/echoserver/$(DEPDIR)/testsuite_testsuite-echoserver.Tpo -c -o examples/echoserver/testsuite_testsuite-echoserver.obj `if test -f 'examples/echoserver/echoserver.c'; then $(CYGPATH_W) 'examples/echoserver/echoserver.c'; else $(CYGPATH_W) '$(srcdir)/examples/echoserver/echoserver.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) examples/echoserver/$(DEPDIR)/testsuite_testsuite-echoserver.Tpo examples/echoserver/$(DEPDIR)/testsuite_testsuite-echoserver.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='examples/echoserver/echoserver.c' object='examples/echoserver/testsuite_testsuite-echoserver.obj' libtool=no @AMDEPBACKSLASH@
+examples/echoserver/testsuite_testsuite_test-echoserver.obj: examples/echoserver/echoserver.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_test_CFLAGS) $(CFLAGS) -MT examples/echoserver/testsuite_testsuite_test-echoserver.obj -MD -MP -MF examples/echoserver/$(DEPDIR)/testsuite_testsuite_test-echoserver.Tpo -c -o examples/echoserver/testsuite_testsuite_test-echoserver.obj `if test -f 'examples/echoserver/echoserver.c'; then $(CYGPATH_W) 'examples/echoserver/echoserver.c'; else $(CYGPATH_W) '$(srcdir)/examples/echoserver/echoserver.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) examples/echoserver/$(DEPDIR)/testsuite_testsuite_test-echoserver.Tpo examples/echoserver/$(DEPDIR)/testsuite_testsuite_test-echoserver.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='examples/echoserver/echoserver.c' object='examples/echoserver/testsuite_testsuite_test-echoserver.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_CFLAGS) $(CFLAGS) -c -o examples/echoserver/testsuite_testsuite-echoserver.obj `if test -f 'examples/echoserver/echoserver.c'; then $(CYGPATH_W) 'examples/echoserver/echoserver.c'; else $(CYGPATH_W) '$(srcdir)/examples/echoserver/echoserver.c'; fi`
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_test_CFLAGS) $(CFLAGS) -c -o examples/echoserver/testsuite_testsuite_test-echoserver.obj `if test -f 'examples/echoserver/echoserver.c'; then $(CYGPATH_W) 'examples/echoserver/echoserver.c'; else $(CYGPATH_W) '$(srcdir)/examples/echoserver/echoserver.c'; fi`
 
-examples/server/testsuite_testsuite-server.o: examples/server/server.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_CFLAGS) $(CFLAGS) -MT examples/server/testsuite_testsuite-server.o -MD -MP -MF examples/server/$(DEPDIR)/testsuite_testsuite-server.Tpo -c -o examples/server/testsuite_testsuite-server.o `test -f 'examples/server/server.c' || echo '$(srcdir)/'`examples/server/server.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) examples/server/$(DEPDIR)/testsuite_testsuite-server.Tpo examples/server/$(DEPDIR)/testsuite_testsuite-server.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='examples/server/server.c' object='examples/server/testsuite_testsuite-server.o' libtool=no @AMDEPBACKSLASH@
+examples/server/testsuite_testsuite_test-server.o: examples/server/server.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_test_CFLAGS) $(CFLAGS) -MT examples/server/testsuite_testsuite_test-server.o -MD -MP -MF examples/server/$(DEPDIR)/testsuite_testsuite_test-server.Tpo -c -o examples/server/testsuite_testsuite_test-server.o `test -f 'examples/server/server.c' || echo '$(srcdir)/'`examples/server/server.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) examples/server/$(DEPDIR)/testsuite_testsuite_test-server.Tpo examples/server/$(DEPDIR)/testsuite_testsuite_test-server.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='examples/server/server.c' object='examples/server/testsuite_testsuite_test-server.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_CFLAGS) $(CFLAGS) -c -o examples/server/testsuite_testsuite-server.o `test -f 'examples/server/server.c' || echo '$(srcdir)/'`examples/server/server.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_test_CFLAGS) $(CFLAGS) -c -o examples/server/testsuite_testsuite_test-server.o `test -f 'examples/server/server.c' || echo '$(srcdir)/'`examples/server/server.c
 
-examples/server/testsuite_testsuite-server.obj: examples/server/server.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_CFLAGS) $(CFLAGS) -MT examples/server/testsuite_testsuite-server.obj -MD -MP -MF examples/server/$(DEPDIR)/testsuite_testsuite-server.Tpo -c -o examples/server/testsuite_testsuite-server.obj `if test -f 'examples/server/server.c'; then $(CYGPATH_W) 'examples/server/server.c'; else $(CYGPATH_W) '$(srcdir)/examples/server/server.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) examples/server/$(DEPDIR)/testsuite_testsuite-server.Tpo examples/server/$(DEPDIR)/testsuite_testsuite-server.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='examples/server/server.c' object='examples/server/testsuite_testsuite-server.obj' libtool=no @AMDEPBACKSLASH@
+examples/server/testsuite_testsuite_test-server.obj: examples/server/server.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_test_CFLAGS) $(CFLAGS) -MT examples/server/testsuite_testsuite_test-server.obj -MD -MP -MF examples/server/$(DEPDIR)/testsuite_testsuite_test-server.Tpo -c -o examples/server/testsuite_testsuite_test-server.obj `if test -f 'examples/server/server.c'; then $(CYGPATH_W) 'examples/server/server.c'; else $(CYGPATH_W) '$(srcdir)/examples/server/server.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) examples/server/$(DEPDIR)/testsuite_testsuite_test-server.Tpo examples/server/$(DEPDIR)/testsuite_testsuite_test-server.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='examples/server/server.c' object='examples/server/testsuite_testsuite_test-server.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_CFLAGS) $(CFLAGS) -c -o examples/server/testsuite_testsuite-server.obj `if test -f 'examples/server/server.c'; then $(CYGPATH_W) 'examples/server/server.c'; else $(CYGPATH_W) '$(srcdir)/examples/server/server.c'; fi`
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_test_CFLAGS) $(CFLAGS) -c -o examples/server/testsuite_testsuite_test-server.obj `if test -f 'examples/server/server.c'; then $(CYGPATH_W) 'examples/server/server.c'; else $(CYGPATH_W) '$(srcdir)/examples/server/server.c'; fi`
 
-testsuite/testsuite_testsuite-testsuite.o: testsuite/testsuite.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_CFLAGS) $(CFLAGS) -MT testsuite/testsuite_testsuite-testsuite.o -MD -MP -MF testsuite/$(DEPDIR)/testsuite_testsuite-testsuite.Tpo -c -o testsuite/testsuite_testsuite-testsuite.o `test -f 'testsuite/testsuite.c' || echo '$(srcdir)/'`testsuite/testsuite.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) testsuite/$(DEPDIR)/testsuite_testsuite-testsuite.Tpo testsuite/$(DEPDIR)/testsuite_testsuite-testsuite.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='testsuite/testsuite.c' object='testsuite/testsuite_testsuite-testsuite.o' libtool=no @AMDEPBACKSLASH@
+testsuite/testsuite_testsuite_test-testsuite.o: testsuite/testsuite.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_test_CFLAGS) $(CFLAGS) -MT testsuite/testsuite_testsuite_test-testsuite.o -MD -MP -MF testsuite/$(DEPDIR)/testsuite_testsuite_test-testsuite.Tpo -c -o testsuite/testsuite_testsuite_test-testsuite.o `test -f 'testsuite/testsuite.c' || echo '$(srcdir)/'`testsuite/testsuite.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) testsuite/$(DEPDIR)/testsuite_testsuite_test-testsuite.Tpo testsuite/$(DEPDIR)/testsuite_testsuite_test-testsuite.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='testsuite/testsuite.c' object='testsuite/testsuite_testsuite_test-testsuite.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_CFLAGS) $(CFLAGS) -c -o testsuite/testsuite_testsuite-testsuite.o `test -f 'testsuite/testsuite.c' || echo '$(srcdir)/'`testsuite/testsuite.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_test_CFLAGS) $(CFLAGS) -c -o testsuite/testsuite_testsuite_test-testsuite.o `test -f 'testsuite/testsuite.c' || echo '$(srcdir)/'`testsuite/testsuite.c
 
-testsuite/testsuite_testsuite-testsuite.obj: testsuite/testsuite.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_CFLAGS) $(CFLAGS) -MT testsuite/testsuite_testsuite-testsuite.obj -MD -MP -MF testsuite/$(DEPDIR)/testsuite_testsuite-testsuite.Tpo -c -o testsuite/testsuite_testsuite-testsuite.obj `if test -f 'testsuite/testsuite.c'; then $(CYGPATH_W) 'testsuite/testsuite.c'; else $(CYGPATH_W) '$(srcdir)/testsuite/testsuite.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) testsuite/$(DEPDIR)/testsuite_testsuite-testsuite.Tpo testsuite/$(DEPDIR)/testsuite_testsuite-testsuite.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='testsuite/testsuite.c' object='testsuite/testsuite_testsuite-testsuite.obj' libtool=no @AMDEPBACKSLASH@
+testsuite/testsuite_testsuite_test-testsuite.obj: testsuite/testsuite.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_test_CFLAGS) $(CFLAGS) -MT testsuite/testsuite_testsuite_test-testsuite.obj -MD -MP -MF testsuite/$(DEPDIR)/testsuite_testsuite_test-testsuite.Tpo -c -o testsuite/testsuite_testsuite_test-testsuite.obj `if test -f 'testsuite/testsuite.c'; then $(CYGPATH_W) 'testsuite/testsuite.c'; else $(CYGPATH_W) '$(srcdir)/testsuite/testsuite.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) testsuite/$(DEPDIR)/testsuite_testsuite_test-testsuite.Tpo testsuite/$(DEPDIR)/testsuite_testsuite_test-testsuite.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='testsuite/testsuite.c' object='testsuite/testsuite_testsuite_test-testsuite.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_CFLAGS) $(CFLAGS) -c -o testsuite/testsuite_testsuite-testsuite.obj `if test -f 'testsuite/testsuite.c'; then $(CYGPATH_W) 'testsuite/testsuite.c'; else $(CYGPATH_W) '$(srcdir)/testsuite/testsuite.c'; fi`
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(testsuite_testsuite_test_CFLAGS) $(CFLAGS) -c -o testsuite/testsuite_testsuite_test-testsuite.obj `if test -f 'testsuite/testsuite.c'; then $(CYGPATH_W) 'testsuite/testsuite.c'; else $(CYGPATH_W) '$(srcdir)/testsuite/testsuite.c'; fi`
 
 .s.o:
 	$(AM_V_CCAS)$(CCASCOMPILE) -c -o $@ $<
@@ -2549,20 +2576,6 @@ recheck: all $(check_PROGRAMS)
 	        am__force_recheck=am--force-recheck \
 	        TEST_LOGS="$$log_list"; \
 	exit $$?
-testsuite/testsuite.log: testsuite/testsuite$(EXEEXT)
-	@p='testsuite/testsuite$(EXEEXT)'; \
-	b='testsuite/testsuite'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
-tests/unit.log: tests/unit$(EXEEXT)
-	@p='tests/unit$(EXEEXT)'; \
-	b='tests/unit'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
 mcapi/test.log: mcapi/test$(EXEEXT)
 	@p='mcapi/test$(EXEEXT)'; \
 	b='mcapi/test'; \
@@ -2971,6 +2984,7 @@ release: rpm-sign
 auto-rpmbuild:
 	@auto-br-rpmbuild -ba rpm/spec
 test: check
+tests/unit.log: testsuite/testsuite.log
 
 maintainer-clean-local:
 	-rm Makefile.in

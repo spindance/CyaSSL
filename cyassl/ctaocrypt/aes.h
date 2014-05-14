@@ -1,6 +1,6 @@
 /* aes.h
  *
- * Copyright (C) 2006-2013 wolfSSL Inc.
+ * Copyright (C) 2006-2014 wolfSSL Inc.
  *
  * This file is part of CyaSSL.
  *
@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 
@@ -94,7 +94,12 @@ typedef struct Aes {
 #endif
 #ifdef CYASSL_AES_COUNTER
     word32  left;            /* unsued bytes left from last call */
-#endif 
+#endif
+#ifdef CYASSL_PIC32MZ_CRYPT
+    word32 key_ce[AES_BLOCK_SIZE*2/sizeof(word32)] ;
+    word32 iv_ce [AES_BLOCK_SIZE  /sizeof(word32)] ;
+    int    keylen ;
+#endif
 } Aes;
 
 
@@ -143,6 +148,27 @@ CYASSL_API int  AesCcmDecrypt(Aes* aes, byte* out, const byte* in, word32 inSz,
     CYASSL_API int  AesInitCavium(Aes*, int);
     CYASSL_API void AesFreeCavium(Aes*);
 #endif
+
+
+#ifdef HAVE_FIPS
+    /* fips wrapper calls, user can call direct */
+    CYASSL_API int  AesSetKey_fips(Aes* aes, const byte* key, word32 len,
+                                   const byte* iv, int dir);
+    CYASSL_API int  AesSetIV_fips(Aes* aes, const byte* iv);
+    CYASSL_API int  AesCbcEncrypt_fips(Aes* aes, byte* out, const byte* in,
+                                       word32 sz);
+    CYASSL_API int  AesCbcDecrypt_fips(Aes* aes, byte* out, const byte* in,
+                                       word32 sz);
+    #ifndef FIPS_NO_WRAPPERS
+        /* if not impl or fips.c impl wrapper force fips calls if fips build */
+        #define AesSetKey     AesSetKey_fips
+        #define AesSetIV      AesSetIV_fips
+        #define AesCbcEncrypt AesCbcEncrypt_fips
+        #define AesCbcDecrypt AesCbcDecrypt_fips
+    #endif /* FIPS_NO_WRAPPERS */
+
+#endif /* HAVE_FIPS */
+
 
 #ifdef __cplusplus
     } /* extern "C" */

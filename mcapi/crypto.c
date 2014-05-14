@@ -1,6 +1,6 @@
 /* crypto.c
  *
- * Copyright (C) 2006-2013 wolfSSL Inc.
+ * Copyright (C) 2006-2014 wolfSSL Inc.
  *
  * This file is part of CyaSSL.
  *
@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 
@@ -39,7 +39,7 @@
 #include <cyassl/ctaocrypt/aes.h>
 #include <cyassl/ctaocrypt/rsa.h>
 #include <cyassl/ctaocrypt/ecc.h>
-#include <cyassl/ctaocrypt/error.h>
+#include <cyassl/ctaocrypt/error-crypt.h>
 
 
 /* Initialize MD5 */
@@ -91,9 +91,7 @@ int CRYPT_SHA_Initialize(CRYPT_SHA_CTX* sha)
     if (sha == NULL)
         return BAD_FUNC_ARG;
 
-    InitSha((Sha*)sha);
-
-    return 0;
+    return InitSha((Sha*)sha);
 }
 
 
@@ -104,9 +102,7 @@ int CRYPT_SHA_DataAdd(CRYPT_SHA_CTX* sha, const unsigned char* input,
     if (sha == NULL || input == NULL)
         return BAD_FUNC_ARG;
 
-    ShaUpdate((Sha*)sha, input, sz);
-
-    return 0;
+    return ShaUpdate((Sha*)sha, input, sz);
 }
 
 
@@ -116,9 +112,7 @@ int CRYPT_SHA_Finalize(CRYPT_SHA_CTX* sha, unsigned char* digest)
     if (sha == NULL || digest == NULL)
         return BAD_FUNC_ARG;
 
-    ShaFinal((Sha*)sha, digest);
-
-    return 0;
+    return ShaFinal((Sha*)sha, digest);
 }
 
 
@@ -131,9 +125,7 @@ int CRYPT_SHA256_Initialize(CRYPT_SHA256_CTX* sha256)
     if (sha256 == NULL)
         return BAD_FUNC_ARG;
 
-    InitSha256((Sha256*)sha256);
-
-    return 0;
+    return InitSha256((Sha256*)sha256);
 }
 
 
@@ -144,9 +136,7 @@ int CRYPT_SHA256_DataAdd(CRYPT_SHA256_CTX* sha256, const unsigned char* input,
     if (sha256 == NULL || input == NULL)
         return BAD_FUNC_ARG;
 
-    Sha256Update((Sha256*)sha256, input, sz);
-
-    return 0;
+    return Sha256Update((Sha256*)sha256, input, sz);
 }
 
 
@@ -156,9 +146,7 @@ int CRYPT_SHA256_Finalize(CRYPT_SHA256_CTX* sha256, unsigned char* digest)
     if (sha256 == NULL || digest == NULL)
         return BAD_FUNC_ARG;
 
-    Sha256Final((Sha256*)sha256, digest);
-
-    return 0;
+    return Sha256Final((Sha256*)sha256, digest);
 }
 
 
@@ -171,9 +159,7 @@ int CRYPT_SHA384_Initialize(CRYPT_SHA384_CTX* sha384)
     if (sha384 == NULL)
         return BAD_FUNC_ARG;
 
-    InitSha384((Sha384*)sha384);
-
-    return 0;
+    return InitSha384((Sha384*)sha384);
 }
 
 
@@ -184,9 +170,7 @@ int CRYPT_SHA384_DataAdd(CRYPT_SHA384_CTX* sha384, const unsigned char* input,
     if (sha384 == NULL || input == NULL)
         return BAD_FUNC_ARG;
 
-    Sha384Update((Sha384*)sha384, input, sz);
-
-    return 0;
+    return Sha384Update((Sha384*)sha384, input, sz);
 }
 
 
@@ -196,9 +180,7 @@ int CRYPT_SHA384_Finalize(CRYPT_SHA384_CTX* sha384, unsigned char* digest)
     if (sha384 == NULL || digest == NULL)
         return BAD_FUNC_ARG;
 
-    Sha384Final((Sha384*)sha384, digest);
-
-    return 0;
+    return Sha384Final((Sha384*)sha384, digest);
 }
 
 
@@ -211,9 +193,7 @@ int CRYPT_SHA512_Initialize(CRYPT_SHA512_CTX* sha512)
     if (sha512 == NULL)
         return BAD_FUNC_ARG;
 
-    InitSha512((Sha512*)sha512);
-
-    return 0;
+    return InitSha512((Sha512*)sha512);
 }
 
 
@@ -224,9 +204,7 @@ int CRYPT_SHA512_DataAdd(CRYPT_SHA512_CTX* sha512, const unsigned char* input,
     if (sha512 == NULL || input == NULL)
         return BAD_FUNC_ARG;
 
-    Sha512Update((Sha512*)sha512, input, sz);
-
-    return 0;
+    return Sha512Update((Sha512*)sha512, input, sz);
 }
 
 
@@ -236,9 +214,7 @@ int CRYPT_SHA512_Finalize(CRYPT_SHA512_CTX* sha512, unsigned char* digest)
     if (sha512 == NULL || digest == NULL)
         return BAD_FUNC_ARG;
 
-    Sha512Final((Sha512*)sha512, digest);
-
-    return 0;
+    return Sha512Final((Sha512*)sha512, digest);
 }
 
 
@@ -257,9 +233,7 @@ int CRYPT_HMAC_SetKey(CRYPT_HMAC_CTX* hmac, int type, const unsigned char* key,
         return BAD_FUNC_ARG;  /* bad hmac type */
     }
 
-    HmacSetKey((Hmac*)hmac, type, key, sz);
-
-    return 0;
+    return HmacSetKey((Hmac*)hmac, type, key, sz);
 }
 
 
@@ -269,9 +243,7 @@ int CRYPT_HMAC_DataAdd(CRYPT_HMAC_CTX* hmac, const unsigned char* input,
     if (hmac == NULL || input == NULL)
         return BAD_FUNC_ARG;
 
-    HmacUpdate((Hmac*)hmac, input, sz);
-
-    return 0;
+    return HmacUpdate((Hmac*)hmac, input, sz);
 }
 
 
@@ -281,9 +253,7 @@ int CRYPT_HMAC_Finalize(CRYPT_HMAC_CTX* hmac, unsigned char* digest)
     if (hmac == NULL || digest == NULL)
         return BAD_FUNC_ARG;
 
-    HmacFinal((Hmac*)hmac, digest);
-
-    return 0;
+    return HmacFinal((Hmac*)hmac, digest);
 }
 
 
@@ -331,9 +301,7 @@ int CRYPT_RNG_Get(CRYPT_RNG_CTX* rng, unsigned char* b)
     if (rng == NULL || b == NULL)
         return BAD_FUNC_ARG;
 
-    *b = RNG_GenerateByte((RNG*)rng);
-
-    return 0;
+    return RNG_GenerateByte((RNG*)rng, (byte*)b);
 }
 
 
@@ -344,9 +312,7 @@ int CRYPT_RNG_BlockGenerate(CRYPT_RNG_CTX* rng, unsigned char* b,
     if (rng == NULL || b == NULL)
         return BAD_FUNC_ARG;
 
-    RNG_GenerateBlock((RNG*)rng, b, sz);
-
-    return 0;
+    return RNG_GenerateBlock((RNG*)rng, b, sz);
 }
 
 
@@ -360,9 +326,7 @@ int CRYPT_TDES_KeySet(CRYPT_TDES_CTX* tdes, const unsigned char* key,
     if (tdes == NULL || key == NULL)
         return BAD_FUNC_ARG;
 
-    Des3_SetKey((Des3*)tdes, key, iv, dir);
-
-    return 0;
+    return Des3_SetKey((Des3*)tdes, key, iv, dir);
 }
 
 
@@ -372,9 +336,7 @@ int CRYPT_TDES_IvSet(CRYPT_TDES_CTX* tdes, const unsigned char* iv)
     if (tdes == NULL || iv == NULL)
         return BAD_FUNC_ARG;
 
-    Des3_SetIV((Des3*)tdes, iv);
-
-    return 0;
+    return Des3_SetIV((Des3*)tdes, iv);
 }
 
 
@@ -385,9 +347,7 @@ int CRYPT_TDES_CBC_Encrypt(CRYPT_TDES_CTX* tdes, unsigned char* out,
     if (tdes == NULL || out == NULL || in == NULL)
         return BAD_FUNC_ARG;
 
-    Des3_CbcEncrypt((Des3*)tdes, out, in, inSz);
-
-    return 0;
+    return Des3_CbcEncrypt((Des3*)tdes, out, in, inSz);
 }
 
 
@@ -398,9 +358,7 @@ int CRYPT_TDES_CBC_Decrypt(CRYPT_TDES_CTX* tdes, unsigned char* out,
     if (tdes == NULL || out == NULL || in == NULL)
         return BAD_FUNC_ARG;
 
-    Des3_CbcDecrypt((Des3*)tdes, out, in, inSz);
-
-    return 0;
+    return Des3_CbcDecrypt((Des3*)tdes, out, in, inSz);
 }
 
 
@@ -424,9 +382,7 @@ int CRYPT_AES_IvSet(CRYPT_AES_CTX* aes, const unsigned char* iv)
     if (aes == NULL || iv == NULL)
         return BAD_FUNC_ARG;
 
-    AesSetIV((Aes*)aes, iv);
-
-    return 0;
+    return AesSetIV((Aes*)aes, iv);
 }
 
 
@@ -501,9 +457,7 @@ int CRYPT_RSA_Initialize(CRYPT_RSA_CTX* rsa)
     if (rsa->holder == NULL)
         return -1;
 
-    InitRsaKey((RsaKey*)rsa->holder, NULL);
-
-    return 0;
+    return InitRsaKey((RsaKey*)rsa->holder, NULL);
 }
 
 

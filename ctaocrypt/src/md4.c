@@ -1,6 +1,6 @@
 /* md4.c
  *
- * Copyright (C) 2006-2013 wolfSSL Inc.
+ * Copyright (C) 2006-2014 wolfSSL Inc.
  *
  * This file is part of CyaSSL.
  *
@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 #ifdef HAVE_CONFIG_H
@@ -161,7 +161,7 @@ void Md4Update(Md4* md4, const byte* data, word32 len)
 
         if (md4->buffLen == MD4_BLOCK_SIZE) {
             #ifdef BIG_ENDIAN_ORDER
-                ByteReverseBytes(local, local, MD4_BLOCK_SIZE);
+                ByteReverseWords(md4->buffer, md4->buffer, MD4_BLOCK_SIZE);
             #endif
             Transform(md4);
             AddLength(md4, MD4_BLOCK_SIZE);
@@ -185,7 +185,7 @@ void Md4Final(Md4* md4, byte* hash)
         md4->buffLen += MD4_BLOCK_SIZE - md4->buffLen;
 
         #ifdef BIG_ENDIAN_ORDER
-            ByteReverseBytes(local, local, MD4_BLOCK_SIZE);
+            ByteReverseWords(md4->buffer, md4->buffer, MD4_BLOCK_SIZE);
         #endif
         Transform(md4);
         md4->buffLen = 0;
@@ -199,7 +199,7 @@ void Md4Final(Md4* md4, byte* hash)
 
     /* store lengths */
     #ifdef BIG_ENDIAN_ORDER
-        ByteReverseBytes(local, local, MD4_BLOCK_SIZE);
+        ByteReverseWords(md4->buffer, md4->buffer, MD4_BLOCK_SIZE);
     #endif
     /* ! length ordering dependent on digest endian type ! */
     XMEMCPY(&local[MD4_PAD_SIZE], &md4->loLen, sizeof(word32));

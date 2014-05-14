@@ -1,6 +1,6 @@
 /* io.c
  *
- * Copyright (C) 2006-2013 wolfSSL Inc.
+ * Copyright (C) 2006-2014 wolfSSL Inc.
  *
  * This file is part of CyaSSL.
  *
@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 #ifdef HAVE_CONFIG_H
@@ -31,7 +31,7 @@
 #endif
 
 #include <cyassl/internal.h>
-#include <cyassl/error.h>
+#include <cyassl/error-ssl.h>
 
 /* if user writes own I/O callbacks they can define CYASSL_USER_IO to remove
    automatic setting of default I/O functions EmbedSend() and EmbedReceive()
@@ -475,6 +475,7 @@ int EmbedGenerateCookie(CYASSL* ssl, byte *buf, int sz, void *ctx)
     XSOCKLENT peerSz = sizeof(peer);
     Sha sha;
     byte digest[SHA_DIGEST_SIZE];
+    int  ret = 0;
 
     (void)ctx;
 
@@ -484,7 +485,9 @@ int EmbedGenerateCookie(CYASSL* ssl, byte *buf, int sz, void *ctx)
         return GEN_COOKIE_E;
     }
     
-    InitSha(&sha);
+    ret = InitSha(&sha);
+    if (ret != 0)
+        return ret;
     ShaUpdate(&sha, (byte*)&peer, peerSz);
     ShaFinal(&sha, digest);
 

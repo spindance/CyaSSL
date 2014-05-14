@@ -1,6 +1,6 @@
 /* aes.c
  *
- * Copyright (C) 2006-2013 wolfSSL Inc.
+ * Copyright (C) 2006-2014 wolfSSL Inc.
  *
  * This file is part of CyaSSL.
  *
@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 #ifdef HAVE_CONFIG_H
@@ -27,8 +27,13 @@
 
 #ifndef NO_AES
 
+#ifdef HAVE_FIPS
+    /* set NO_WRAPPERS before headers, use direct internal f()s not wrappers */
+    #define FIPS_NO_WRAPPERS
+#endif
+
 #include <cyassl/ctaocrypt/aes.h>
-#include <cyassl/ctaocrypt/error.h>
+#include <cyassl/ctaocrypt/error-crypt.h>
 #include <cyassl/ctaocrypt/logging.h>
 #ifdef NO_INLINE
     #include <cyassl/ctaocrypt/misc.h>
@@ -46,14 +51,193 @@
 #endif
 
 
+
 #ifdef HAVE_CAVIUM
     static int  AesCaviumSetKey(Aes* aes, const byte* key, word32 length,
                                 const byte* iv);
-    static void AesCaviumCbcEncrypt(Aes* aes, byte* out, const byte* in,
+    static int  AesCaviumCbcEncrypt(Aes* aes, byte* out, const byte* in,
                                     word32 length);
-    static void AesCaviumCbcDecrypt(Aes* aes, byte* out, const byte* in,
+    static int  AesCaviumCbcDecrypt(Aes* aes, byte* out, const byte* in,
                                     word32 length);
 #endif
+
+#if defined(CYASSL_PIC32MZ_CRYPT)
+
+#include "../../cyassl/ctaocrypt/port/pic32/pic32mz-crypt.h"
+#define DEBUG_CYASSL
+
+    /* core hardware crypt engine driver */
+    static void AesCrypt(Aes *aes, byte* out, const byte* in, word32 sz,
+                                            int dir, int algo, int cryptoalgo)
+    {
+        securityAssociation *sa_p ;
+        bufferDescriptor *bd_p ;
+
+        volatile securityAssociation sa __attribute__((aligned (8)));
+        volatile bufferDescriptor bd __attribute__((aligned (8)));
+        volatile int k ;
+
+        /* get uncached address */
+        sa_p = KVA0_TO_KVA1(&sa) ;
+        bd_p = KVA0_TO_KVA1(&bd) ;
+
+        /* Sync cache and physical memory */
+        if(PIC32MZ_IF_RAM(in)) {
+            XMEMCPY((void *)KVA0_TO_KVA1(in), (void *)in, sz);
+        }
+        XMEMSET((void *)KVA0_TO_KVA1(out), 0, sz);
+        /* Set up the Security Association */
+        XMEMSET((byte *)KVA0_TO_KVA1(&sa), 0, sizeof(sa));
+        sa_p->SA_CTRL.ALGO = algo ; /* AES */
+        sa_p->SA_CTRL.LNC = 1;
+        sa_p->SA_CTRL.LOADIV = 1;
+        sa_p->SA_CTRL.FB = 1;
+        sa_p->SA_CTRL.ENCTYPE = dir ; /* Encryption/Decryption */
+        sa_p->SA_CTRL.CRYPTOALGO = cryptoalgo;
+
+        if(cryptoalgo == PIC32_CRYPTOALGO_AES_GCM){
+            switch(aes->keylen) {
+            case 32:
+                sa_p->SA_CTRL.KEYSIZE = PIC32_AES_KEYSIZE_256 ;
+                break ;
+            case 24:
+                sa_p->SA_CTRL.KEYSIZE = PIC32_AES_KEYSIZE_192 ;
+                break ;
+            case 16:
+                sa_p->SA_CTRL.KEYSIZE = PIC32_AES_KEYSIZE_128 ;
+                break ;
+            }
+        } else
+            sa_p->SA_CTRL.KEYSIZE = PIC32_AES_KEYSIZE_128 ;
+
+        ByteReverseWords(
+        (word32 *)KVA0_TO_KVA1(sa.SA_ENCKEY + 8 - aes->keylen/sizeof(word32)),
+                         (word32 *)aes->key_ce, aes->keylen);
+        ByteReverseWords(
+        (word32*)KVA0_TO_KVA1(sa.SA_ENCIV), (word32 *)aes->iv_ce, 16);
+
+        XMEMSET((byte *)KVA0_TO_KVA1(&bd), 0, sizeof(bd));
+        /* Set up the Buffer Descriptor */
+        bd_p->BD_CTRL.BUFLEN = sz;
+        if(cryptoalgo == PIC32_CRYPTOALGO_AES_GCM) {
+            if(sz % 0x10)
+                bd_p->BD_CTRL.BUFLEN = (sz/0x10 + 1) * 0x10 ;
+        }
+        bd_p->BD_CTRL.LIFM = 1;
+        bd_p->BD_CTRL.SA_FETCH_EN = 1;
+        bd_p->BD_CTRL.LAST_BD = 1;
+        bd_p->BD_CTRL.DESC_EN = 1;
+
+        bd_p->SA_ADDR = (unsigned int)KVA_TO_PA(&sa) ; 
+        bd_p->SRCADDR = (unsigned int)KVA_TO_PA(in) ; 
+        bd_p->DSTADDR = (unsigned int)KVA_TO_PA(out); 
+        bd_p->MSGLEN = sz ;
+
+        CECON = 1 << 6;
+        while (CECON);
+
+        /* Run the engine */
+        CEBDPADDR = (unsigned int)KVA_TO_PA(&bd) ;
+        CEINTEN = 0x07;
+        CECON = 0x27;
+
+        WAIT_ENGINE ;
+
+        if((cryptoalgo == PIC32_CRYPTOALGO_CBC) ||
+           (cryptoalgo == PIC32_CRYPTOALGO_TCBC)||
+           (cryptoalgo == PIC32_CRYPTOALGO_RCBC)) {
+            /* set iv for the next call */
+            if(dir == PIC32_ENCRYPTION) {
+	        XMEMCPY((void *)aes->iv_ce,
+                        (void*)KVA0_TO_KVA1(out + sz - AES_BLOCK_SIZE),
+                        AES_BLOCK_SIZE) ;
+	    } else {
+                ByteReverseWords((word32*)aes->iv_ce,
+                        (word32 *)KVA0_TO_KVA1(in + sz - AES_BLOCK_SIZE),
+                        AES_BLOCK_SIZE);
+	    }
+        }
+        XMEMCPY((byte *)out, (byte *)KVA0_TO_KVA1(out), sz) ;
+        ByteReverseWords((word32*)out, (word32 *)out, sz);
+    }
+
+    int AesCbcEncrypt(Aes* aes, byte* out, const byte* in, word32 sz)
+    {
+        AesCrypt(aes, out, in, sz, PIC32_ENCRYPTION, PIC32_ALGO_AES,
+                                                      PIC32_CRYPTOALGO_RCBC );
+    }
+
+    int AesCbcDecrypt(Aes* aes, byte* out, const byte* in, word32 sz)
+    {
+        AesCrypt(aes, out, in, sz, PIC32_DECRYPTION, PIC32_ALGO_AES,
+                                                      PIC32_CRYPTOALGO_RCBC);
+    }
+
+    #if defined(CYASSL_AES_COUNTER)
+    void AesCtrEncrypt(Aes* aes, byte* out, const byte* in, word32 sz)
+    {
+        int i ;
+        char out_block[AES_BLOCK_SIZE] ;
+        int odd ;
+        int even ;
+        char *tmp ; /* (char *)aes->tmp, for short */
+
+        tmp = (char *)aes->tmp ;
+        if(aes->left) {
+            if((aes->left + sz) >= AES_BLOCK_SIZE){
+                odd = AES_BLOCK_SIZE - aes->left ;
+            } else {
+                odd = sz ;
+            }
+            XMEMCPY(tmp+aes->left, in, odd) ;
+            if((odd+aes->left) == AES_BLOCK_SIZE){
+                AesCrypt(aes, out_block, tmp, AES_BLOCK_SIZE,
+                    PIC32_ENCRYPTION, PIC32_ALGO_AES, PIC32_CRYPTOALGO_RCTR);
+                XMEMCPY(out, out_block+aes->left, odd) ;
+                aes->left = 0 ;
+                XMEMSET(tmp, 0x0, AES_BLOCK_SIZE) ;
+                /* Increment IV */
+                for (i = AES_BLOCK_SIZE - 1; i >= 0; i--) {
+                    if (++((byte *)aes->iv_ce)[i])
+                        break ;
+                }
+            }
+            in += odd ;
+            out+= odd ;
+            sz -= odd ;
+        }
+        odd = sz % AES_BLOCK_SIZE ;  /* if there is tail flagment */
+        if(sz / AES_BLOCK_SIZE) {
+            even = (sz/AES_BLOCK_SIZE)*AES_BLOCK_SIZE ;
+            AesCrypt(aes, out, in, even, PIC32_ENCRYPTION, PIC32_ALGO_AES,
+                                                    PIC32_CRYPTOALGO_RCTR);
+            out += even ;
+            in  += even ;
+            do {  /* Increment IV */
+                for (i = AES_BLOCK_SIZE - 1; i >= 0; i--) {
+                    if (++((byte *)aes->iv_ce)[i])
+                        break ;
+                }
+                even -= AES_BLOCK_SIZE ;
+            } while((int)even > 0) ;
+        }
+        if(odd) {
+            XMEMSET(tmp+aes->left, 0x0, AES_BLOCK_SIZE - aes->left) ;
+            XMEMCPY(tmp+aes->left, in, odd) ;
+            AesCrypt(aes, out_block, tmp, AES_BLOCK_SIZE,
+                    PIC32_ENCRYPTION, PIC32_ALGO_AES, PIC32_CRYPTOALGO_RCTR);
+            XMEMCPY(out, out_block+aes->left,odd) ;
+            aes->left += odd ;
+        }
+    }
+    #endif /* CYASSL_AES_COUNTER */
+
+    #ifdef HAVE_AESGCM
+    #define HAVE_AES_ENGINE
+    /* Hardware AESGCM borows most of the software AESGCM, GMAC */
+    #endif
+
+#endif /* CYASSL_PIC32MZ_CRYPT */
 
 #ifdef STM32F2_CRYPTO
     /*
@@ -439,13 +623,11 @@ extern volatile unsigned char __MBAR[];
 
 int AesCbcEncrypt(Aes* aes, byte* po, const byte* pi, word32 sz)
 {
-	//printf("AesCbcEncrypt(%x, %x, %x, %d)\n", aes, po, pi, sz) ;
 	return(AesCbcCrypt(aes, po, pi, sz, SEC_DESC_AES_CBC_ENCRYPT)) ;
 }
 
 int AesCbcDecrypt(Aes* aes, byte* po, const byte* pi, word32 sz)
 {
-	//printf("AesCbcDecrypt(%x, %x, %x, %d)\n", aes, po, pi, sz) ;
 	return(AesCbcCrypt(aes, po, pi, sz, SEC_DESC_AES_CBC_DECRYPT)) ;
 }
 	
@@ -1322,7 +1504,6 @@ static const word32 Td[5][256] = {
 };
 
 
-
 #define GETBYTE(x, y) (word32)((byte)((x) >> (8 * (y))))
 
 
@@ -1486,6 +1667,19 @@ static int AesSetKeyLocal(Aes* aes, const byte* userKey, word32 keylen,
     #ifdef LITTLE_ENDIAN_ORDER
         ByteReverseWords(rk, rk, keylen);
     #endif
+
+#ifdef CYASSL_PIC32MZ_CRYPT
+    {
+        word32 *akey1 = aes->key_ce;
+        word32 *areg = aes->iv_ce ;
+        aes->keylen = keylen ;
+        XMEMCPY(akey1, userKey, keylen);
+        if (iv)
+            XMEMCPY(areg, iv, AES_BLOCK_SIZE);
+        else
+            XMEMSET(areg,  0, AES_BLOCK_SIZE);
+    }
+#endif
 
     switch(keylen)
     {
@@ -1976,7 +2170,7 @@ static void AesDecrypt(Aes* aes, const byte* inBlock, byte* outBlock)
     XMEMCPY(outBlock + 3 * sizeof(s0), &s3, sizeof(s3));
 }
 
-
+#ifndef HAVE_AES_ENGINE
 int AesCbcEncrypt(Aes* aes, byte* out, const byte* in, word32 sz)
 {
     word32 blocks = sz / AES_BLOCK_SIZE;
@@ -2083,7 +2277,7 @@ int AesCbcDecrypt(Aes* aes, byte* out, const byte* in, word32 sz)
 
     return 0;
 }
-
+#endif
 
 #ifdef CYASSL_AES_DIRECT
 
@@ -2116,7 +2310,7 @@ int AesSetKeyDirect(Aes* aes, const byte* userKey, word32 keylen,
 #endif /* CYASSL_AES_DIRECT || CYASSL_AES_COUNTER */
 
 
-#ifdef CYASSL_AES_COUNTER
+#if defined(CYASSL_AES_COUNTER) && !defined(HAVE_AES_ENGINE)
 
 /* Increment AES counter */
 static INLINE void IncrementAesCounter(byte* inOutCtr)
@@ -2806,34 +3000,51 @@ void AesGcmEncrypt(Aes* aes, byte* out, const byte* in, word32 sz,
     word32 partial = sz % AES_BLOCK_SIZE;
     const byte* p = in;
     byte* c = out;
-    byte ctr[AES_BLOCK_SIZE];
+    byte counter[AES_BLOCK_SIZE];
+    byte *ctr ;
     byte scratch[AES_BLOCK_SIZE];
 
     CYASSL_ENTER("AesGcmEncrypt");
+
+#ifdef CYASSL_PIC32MZ_CRYPT
+    ctr = (char *)aes->iv_ce ;
+#else
+    ctr = counter ;
+#endif
 
     XMEMSET(ctr, 0, AES_BLOCK_SIZE);
     XMEMCPY(ctr, iv, ivSz);
     InitGcmCounter(ctr);
 
+#ifdef CYASSL_PIC32MZ_CRYPT
+    if(blocks)
+        AesCrypt(aes, out, in, blocks*AES_BLOCK_SIZE,
+             PIC32_ENCRYPTION, PIC32_ALGO_AES, PIC32_CRYPTOALGO_AES_GCM );
+#endif
     while (blocks--) {
         IncrementGcmCounter(ctr);
+        #ifndef CYASSL_PIC32MZ_CRYPT
         AesEncrypt(aes, ctr, scratch);
         xorbuf(scratch, p, AES_BLOCK_SIZE);
         XMEMCPY(c, scratch, AES_BLOCK_SIZE);
-
+        #endif
         p += AES_BLOCK_SIZE;
         c += AES_BLOCK_SIZE;
     }
+
     if (partial != 0) {
         IncrementGcmCounter(ctr);
         AesEncrypt(aes, ctr, scratch);
         xorbuf(scratch, p, partial);
         XMEMCPY(c, scratch, partial);
+
     }
+
     GHASH(aes, authIn, authInSz, out, sz, authTag, authTagSz);
     InitGcmCounter(ctr);
     AesEncrypt(aes, ctr, scratch);
     xorbuf(authTag, scratch, authTagSz);
+
 }
 
 
@@ -2846,10 +3057,17 @@ int  AesGcmDecrypt(Aes* aes, byte* out, const byte* in, word32 sz,
     word32 partial = sz % AES_BLOCK_SIZE;
     const byte* c = in;
     byte* p = out;
-    byte ctr[AES_BLOCK_SIZE];
+    byte counter[AES_BLOCK_SIZE];
+    byte *ctr ;
     byte scratch[AES_BLOCK_SIZE];
 
     CYASSL_ENTER("AesGcmDecrypt");
+
+#ifdef CYASSL_PIC32MZ_CRYPT
+    ctr = (char *)aes->iv_ce ;
+#else
+    ctr = counter ;
+#endif
 
     XMEMSET(ctr, 0, AES_BLOCK_SIZE);
     XMEMCPY(ctr, iv, ivSz);
@@ -2864,17 +3082,25 @@ int  AesGcmDecrypt(Aes* aes, byte* out, const byte* in, word32 sz,
         GHASH(aes, authIn, authInSz, in, sz, Tprime, sizeof(Tprime));
         AesEncrypt(aes, ctr, EKY0);
         xorbuf(Tprime, EKY0, sizeof(Tprime));
+
         if (XMEMCMP(authTag, Tprime, authTagSz) != 0) {
             return AES_GCM_AUTH_E;
         }
     }
+ 
+#ifdef CYASSL_PIC32MZ_CRYPT
+    if(blocks)
+        AesCrypt(aes, out, in, blocks*AES_BLOCK_SIZE,
+             PIC32_DECRYPTION, PIC32_ALGO_AES, PIC32_CRYPTOALGO_AES_GCM );
+#endif
 
     while (blocks--) {
         IncrementGcmCounter(ctr);
+        #ifndef CYASSL_PIC32MZ_CRYPT
         AesEncrypt(aes, ctr, scratch);
         xorbuf(scratch, c, AES_BLOCK_SIZE);
         XMEMCPY(p, scratch, AES_BLOCK_SIZE);
-
+        #endif
         p += AES_BLOCK_SIZE;
         c += AES_BLOCK_SIZE;
     }
@@ -2884,9 +3110,9 @@ int  AesGcmDecrypt(Aes* aes, byte* out, const byte* in, word32 sz,
         xorbuf(scratch, c, partial);
         XMEMCPY(p, scratch, partial);
     }
-
     return 0;
 }
+
 
 
 CYASSL_API void GmacSetKey(Gmac* gmac, const byte* key, word32 len)
@@ -3195,8 +3421,8 @@ static int AesCaviumSetKey(Aes* aes, const byte* key, word32 length,
 }
 
 
-static void AesCaviumCbcEncrypt(Aes* aes, byte* out, const byte* in,
-                                word32 length)
+static int AesCaviumCbcEncrypt(Aes* aes, byte* out, const byte* in,
+                               word32 length)
 {
     word   offset = 0;
     word32 requestId;
@@ -3208,6 +3434,7 @@ static void AesCaviumCbcEncrypt(Aes* aes, byte* out, const byte* in,
                           (byte*)aes->reg, (byte*)aes->key, &requestId,
                           aes->devId) != 0) {
             CYASSL_MSG("Bad Cavium Aes Encrypt");
+            return -1;
         }
         length -= CYASSL_MAX_16BIT;
         offset += CYASSL_MAX_16BIT;
@@ -3220,13 +3447,15 @@ static void AesCaviumCbcEncrypt(Aes* aes, byte* out, const byte* in,
                           (byte*)aes->reg, (byte*)aes->key, &requestId,
                           aes->devId) != 0) {
             CYASSL_MSG("Bad Cavium Aes Encrypt");
+            return -1;
         }
         XMEMCPY(aes->reg, out + offset+length - AES_BLOCK_SIZE, AES_BLOCK_SIZE);
     }
+    return 0;
 }
 
-static void AesCaviumCbcDecrypt(Aes* aes, byte* out, const byte* in,
-                                word32 length)
+static int AesCaviumCbcDecrypt(Aes* aes, byte* out, const byte* in,
+                               word32 length)
 {
     word32 requestId;
     word   offset = 0;
@@ -3239,6 +3468,7 @@ static void AesCaviumCbcDecrypt(Aes* aes, byte* out, const byte* in,
                           (byte*)aes->reg, (byte*)aes->key, &requestId,
                           aes->devId) != 0) {
             CYASSL_MSG("Bad Cavium Aes Decrypt");
+            return -1;
         }
         length -= CYASSL_MAX_16BIT;
         offset += CYASSL_MAX_16BIT;
@@ -3252,12 +3482,15 @@ static void AesCaviumCbcDecrypt(Aes* aes, byte* out, const byte* in,
                           (byte*)aes->reg, (byte*)aes->key, &requestId,
                           aes->devId) != 0) {
             CYASSL_MSG("Bad Cavium Aes Decrypt");
+            return -1;
         }
         XMEMCPY(aes->reg, aes->tmp, AES_BLOCK_SIZE);
     }
+    return 0;
 }
 
 #endif /* HAVE_CAVIUM */
 
 #endif /* NO_AES */
+
 
