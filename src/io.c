@@ -239,7 +239,9 @@ int EmbedReceive(CYASSL *ssl, char *buf, int sz, void *ctx)
     }
 #endif
 
+    logInterface("EmbedReceive - lwip_recv ssl=%08x sd=%08x, buf=%08x len=%u flags=%x", (unsigned)ssl, (unsigned)sd, (unsigned)buf, sz, ssl->wflags);
     recvd = (int)RECV_FUNCTION(sd, buf, sz, ssl->rflags);
+    logInterface("EmbedReceive - lwip_recv ssl=%08x sd=%08x, buf=%08x len=%u flags=%x returned=%d", (unsigned)ssl, (unsigned)sd, (unsigned)buf, sz, ssl->wflags, recvd);
 
     recvd = TranslateReturnCode(recvd, sd);
 
@@ -283,6 +285,8 @@ int EmbedReceive(CYASSL *ssl, char *buf, int sz, void *ctx)
         return CYASSL_CBIO_ERR_CONN_CLOSE;
     }
 
+    logInterface("EmbedReceive - lwip_recv ssl=%08x sd=%08x, buf=%08x len=%u flags=%x FINAL=%d", (unsigned)ssl, (unsigned)sd, (unsigned)buf, sz, ssl->wflags, recvd);
+
     return recvd;
 }
 
@@ -295,6 +299,9 @@ int EmbedSend(CYASSL* ssl, char *buf, int sz, void *ctx)
     int sent;
     int len = sz;
     int err;
+
+    CYASSL_ENTER("EmbedSend");
+    logInterface("ssl=%08x sd=%08x, buf=%08x len=%u flags=%x", (unsigned)ssl, (unsigned)sd, (unsigned)&buf[sz - len], len, ssl->wflags);
 
     sent = (int)SEND_FUNCTION(sd, &buf[sz - len], len, ssl->wflags);
 
@@ -323,7 +330,8 @@ int EmbedSend(CYASSL* ssl, char *buf, int sz, void *ctx)
             return CYASSL_CBIO_ERR_GENERAL;
         }
     }
- 
+
+    CYASSL_LEAVE("EmbedSend", sent);
     return sent;
 }
 
