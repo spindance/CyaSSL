@@ -301,9 +301,10 @@ int EmbedSend(CYASSL* ssl, char *buf, int sz, void *ctx)
     int err;
 
     CYASSL_ENTER("EmbedSend");
-    logInterface("ssl=%08x sd=%08x, buf=%08x len=%u flags=%x", (unsigned)ssl, (unsigned)sd, (unsigned)&buf[sz - len], len, ssl->wflags);
+    logInterface("EmbedSend - lwip_send ssl=%08x sd=%08x, buf=%08x len=%u flags=%x", (unsigned)ssl, (unsigned)sd, (unsigned)&buf[sz - len], len, ssl->wflags);
 
     sent = (int)SEND_FUNCTION(sd, &buf[sz - len], len, ssl->wflags);
+    logInterface("EmbedSend - lwip_send ssl=%08x sd=%08x, buf=%08x len=%u flags=%x returned=%d", (unsigned)ssl, (unsigned)sd, (unsigned)&buf[sz - len], len, ssl->wflags, sent);
 
     if (sent < 0) {
         err = LastError();
