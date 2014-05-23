@@ -68,35 +68,27 @@ int UnLockMutex(CyaSSL_Mutex *m)
 
     #if defined(FREERTOS)
 
-        int InitMutex(CyaSSL_Mutex* m)
+        int InitMutex(CyaSSL_Mutex *pGivenMutexHandle)
         {
-            int iReturn;
-
-            *m = ( CyaSSL_Mutex ) xSemaphoreCreateMutex();
-            if( *m != NULL )
-                iReturn = 0;
-            else
-                iReturn = BAD_MUTEX_E;
-
-            return iReturn;
-        }
-
-        int FreeMutex(CyaSSL_Mutex* m)
-        {
-            vSemaphoreDelete( *m );
+            rtsSemMutexCreate(pGivenMutexHandle, "semMtxCyaSSL");
             return 0;
         }
 
-        int LockMutex(CyaSSL_Mutex* m)
+        int FreeMutex(CyaSSL_Mutex *pGivenMutexHandle)
         {
-            /* Assume an infinite block, or should there be zero block? */
-            xSemaphoreTake( *m, portMAX_DELAY );
+            rtsSemMutexDelete(*pGivenMutexHandle);
             return 0;
         }
 
-        int UnLockMutex(CyaSSL_Mutex* m)
+        int LockMutex(CyaSSL_Mutex *pGivenMutexHandle)
         {
-            xSemaphoreGive( *m );
+            rtsSemMutexTakeBlockForever(*pGivenMutexHandle);
+            return 0;
+        }
+
+        int UnLockMutex(CyaSSL_Mutex *pGivenMutexHandle)
+        {
+            rtsSemMutexGive(*pGivenMutexHandle);
             return 0;
         }
 

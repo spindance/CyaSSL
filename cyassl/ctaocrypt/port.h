@@ -78,7 +78,8 @@
 #else /* MULTI_THREADED */
     /* FREERTOS comes first to enable use of FreeRTOS Windows simulator only */
     #ifdef FREERTOS
-        typedef xSemaphoreHandle CyaSSL_Mutex;
+        #include  "rtosShim/rtsSemaphore.h"
+        typedef rtsSemHandle  CyaSSL_Mutex;
     #elif defined(CYASSL_SAFERTOS)
         typedef struct CyaSSL_Mutex {
             signed char mutexBuffer[portQUEUE_OVERHEAD_BYTES];
