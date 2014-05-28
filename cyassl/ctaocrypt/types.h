@@ -153,7 +153,7 @@ enum {
 
 /* Micrium will use Visual Studio for compilation but not the Win32 API */
 #if defined(_WIN32) && !defined(MICRIUM) && !defined(FREERTOS) \
-        && !defined(EBSNET)
+        && !defined(EBSNET) && !defined(USER_PROVIDED_RTOS_SHIM)
     #define USE_WINDOWS_API
 #endif
 

@@ -62,6 +62,8 @@
     #endif
 #elif defined(CYASSL_CMSIS_RTOS)
     #include "cmsis_os.h"    
+#elif defined(USER_PROVIDED_RTOS_SHIM)
+    /* do nothing */
 #else
     #ifndef SINGLE_THREADED
         #define CYASSL_PTHREADS
@@ -104,6 +106,8 @@
         #endif
     #elif defined(CYASSL_CMSIS_RTOS)
         typedef osMutexId CyaSSL_Mutex;
+    #elif defined(USER_PROVIDED_RTOS_SHIM)
+           /* do nothing */
     #else
         #error Need a mutex type in multithreaded mode
     #endif /* USE_WINDOWS_API */
