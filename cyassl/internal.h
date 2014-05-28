@@ -96,7 +96,9 @@
         #include <rtl.h>
     #endif
 #elif defined(MBED)
-
+    /* do nothing */
+#elif defined(USER_PROVIDED_RTOS_SHIM)
+    /* do nothing */
 #else
     #ifndef SINGLE_THREADED
         #define CYASSL_PTHREADS
