@@ -224,6 +224,7 @@ CPPFLAGS-$(CONFIG_STM32F401XX)          += -D"STM32F401xx"
 CPPFLAGS-y                              += -D"USE_STDPERIPH_DRIVER"
 CPPFLAGS-y                              += -D"USE_STM324xG_EVAL"
 CPPFLAGS-y                              += -D USE_FLOATING_POINT
+CPPFLAGS-$(CONFIG_NDEBUG_ENA)           += -D"NDEBUG"
 CPPFLAGS-y                              += $(INCLUDE_DIRS-y)
 
 CFLAGS += $(CPPFLAGS-y)
