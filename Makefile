@@ -151,6 +151,7 @@ INCLUDE_DIRS-$(CONFIG_FREERTOS_PORT_ARM_CM3)   += -I$(RTOS_SOURCE_DIR)/portable/
 INCLUDE_DIRS-$(CONFIG_FREERTOS_PORT_ARM_CM4F)  += -I$(RTOS_SOURCE_DIR)/portable/GCC/ARM_CM4F
 INCLUDE_DIRS-y                                 += -I$(LWIP_SOURCE_DIR)/include
 INCLUDE_DIRS-y                                 += -I$(LWIP_SOURCE_DIR)/include/ipv4
+INCLUDE_DIRS-y                                 += -I$(LWIP_SOURCE_DIR)/include/ipv6
 INCLUDE_DIRS-y                                 += -I$(LWIP_CONTRIB_PORTS_SOURCE_DIR)/include/LM3S
 INCLUDE_DIRS-y                                 += -I$(STM32PERIPHERALLIB_DRIVER_INCLUDE)
 INCLUDE_DIRS-y                                 += -I$(STM32PERIPHERALLIB_CMSIS_INCLUDE)

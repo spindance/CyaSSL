@@ -303,8 +303,10 @@ int EmbedSend(CYASSL* ssl, char *buf, int sz, void *ctx)
     CYASSL_ENTER("EmbedSend");
     CYASSL_DEBUG("EmbedSend - lwip_send ssl=%08x sd=%08x, buf=%08x len=%u flags=%x", (unsigned)ssl, (unsigned)sd, (unsigned)&buf[sz - len], len, ssl->wflags);
 
+    lprintf("lwip_send ssl=%08x sd=%08x, buf=%08x len=%u flags=%x\n", (unsigned)ssl, (unsigned)sd, (unsigned)&buf[sz - len], len, ssl->wflags);
     sent = (int)SEND_FUNCTION(sd, &buf[sz - len], len, ssl->wflags);
     CYASSL_DEBUG("EmbedSend - lwip_send ssl=%08x sd=%08x, buf=%08x len=%u flags=%x returned=%d", (unsigned)ssl, (unsigned)sd, (unsigned)&buf[sz - len], len, ssl->wflags, sent);
+    lprintf("lwip_send len=%u flags=%x returned=%d\n", len, ssl->wflags, sent);
 
     if (sent < 0) {
         err = LastError();
