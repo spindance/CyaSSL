@@ -435,10 +435,14 @@ int CyaSSL_write(CYASSL* ssl, const void* data, int sz)
 
     CYASSL_LEAVE("SSL_write()", ret);
 
+#if defined CYASSL_CYASSL_WRITE_PASS_ERROR_THROUGH && CYASSL_CYASSL_WRITE_PASS_ERROR_THROUGH
+    return ret;
+#else
     if (ret < 0)
         return SSL_FATAL_ERROR;
     else
         return ret;
+#endif
 }
 
 

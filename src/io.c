@@ -198,6 +198,20 @@ static INLINE int TranslateReturnCode(int old, int sd)
     return old;
 }
 
+#if (defined CYASSL_LASTERROR_GETSOCKETOPT) && CYASSL_LASTERROR_GETSOCKETOPT
+
+static INLINE int LastError(int sd)
+{
+    int err;
+
+    socklen_t len = sizeof(err);
+
+    getsockopt(sd, SOL_SOCKET, SO_ERROR, &err, &len);
+
+    return err;
+}
+
+#else
 static INLINE int LastError(void)
 {
 #ifdef USE_WINDOWS_API 
@@ -208,6 +222,7 @@ static INLINE int LastError(void)
     return errno;
 #endif
 }
+#endif
 
 /* The receive embedded callback
  *  return : nb bytes read, or error
@@ -246,7 +261,13 @@ int EmbedReceive(CYASSL *ssl, char *buf, int sz, void *ctx)
     recvd = TranslateReturnCode(recvd, sd);
 
     if (recvd < 0) {
-        err = LastError();
+
+        #if (defined CYASSL_LASTERROR_GETSOCKETOPT) && CYASSL_LASTERROR_GETSOCKETOPT
+            err = LastError(sd);
+        #else
+            err = LastError();
+        #endif
+        lprintf("lwip_recv len=%u flags=%x returned=%d err=0x%08x\n", sz, ssl->wflags, recvd, err);
         CYASSL_MSG("Embed Receive error");
 
         if (err == SOCKET_EWOULDBLOCK || err == SOCKET_EAGAIN) {
@@ -309,7 +330,13 @@ int EmbedSend(CYASSL* ssl, char *buf, int sz, void *ctx)
     lprintf("lwip_send len=%u flags=%x returned=%d\n", len, ssl->wflags, sent);
 
     if (sent < 0) {
-        err = LastError();
+        #if (defined CYASSL_LASTERROR_GETSOCKETOPT) && CYASSL_LASTERROR_GETSOCKETOPT
+            err = LastError(sd);
+        #else
+            err = LastError();
+        #endif
+        lprintf("lwip_send len=%u flags=%x returned=%d err=0x%08x\n", len, ssl->wflags, sent, err);
+
         CYASSL_MSG("Embed Send error");
 
         if (err == SOCKET_EWOULDBLOCK || err == SOCKET_EAGAIN) {
