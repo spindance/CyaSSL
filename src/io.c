@@ -305,7 +305,10 @@ int EmbedSend(CYASSL* ssl, char *buf, int sz, void *ctx)
 
     int result = setsockopt (sd, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeOfTimeOut);
 
-    if (result<0) logFatal("setsockopt SO_SNDTIMEO failed.");
+    if (result<0) {
+      logError("setsockopt SO_SNDTIMEO failed(%d).",result);
+      return CYASSL_CBIO_ERR_GENERAL;
+    }
 
     CYASSL_ENTER("EmbedSend");
     CYASSL_DEBUG("EmbedSend - lwip_send ssl=%08x sd=%08x, buf=%08x len=%u flags=%x", (unsigned)ssl, (unsigned)sd, (unsigned)&buf[sz - len], len, ssl->wflags);
