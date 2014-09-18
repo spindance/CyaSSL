@@ -81,7 +81,7 @@
 
 /* HPUX doesn't use socklent_t for third parameter to accept, unless
    _XOPEN_SOURCE_EXTENDED is defined */
-#if !defined(__hpux__) && !defined(CYASSL_MDK_ARM)
+#if !defined(__hpux__) && !defined(CYASSL_MDK_ARM) && !defined(CYASSL_IAR_ARM)
     typedef socklen_t* ACCEPT_THIRD_T;
 #else
     #if defined _XOPEN_SOURCE_EXTENDED
@@ -159,8 +159,8 @@
 #define crlPemDir  "./certs/crl"
 
 typedef struct tcp_ready {
-    int ready;              /* predicate */
-    int port;
+    word16 ready;              /* predicate */
+    word16 port;
 #if defined(_POSIX_THREADS) && !defined(__MINGW32__)
     pthread_mutex_t mutex;
     pthread_cond_t  cond;
@@ -208,10 +208,8 @@ static const word16      yasslPort = 11111;
 static INLINE void err_sys(const char* msg)
 {
     printf("yassl error: %s\n", msg);
-    #ifndef CYASSL_MDK_SHELL
     if (msg)
         exit(EXIT_FAILURE);
-    #endif
 }
 
 
@@ -284,7 +282,7 @@ static INLINE int mygetopt(int argc, char** argv, const char* optstring)
 }
 
 
-#ifdef OPENSSL_EXTRA
+#if defined(OPENSSL_EXTRA) || defined(HAVE_WEBSERVER)
 
 static INLINE int PasswordCallBack(char* passwd, int sz, int rw, void* userdata)
 {
@@ -560,7 +558,7 @@ static INLINE int tcp_select(SOCKET_T socketfd, int to_sec)
 #endif /* !CYASSL_MDK_ARM */
 
 
-static INLINE void tcp_listen(SOCKET_T* sockfd, int* port, int useAnyAddr,
+static INLINE void tcp_listen(SOCKET_T* sockfd, word16* port, int useAnyAddr,
                               int udp)
 {
     SOCKADDR_IN_T addr;
@@ -622,7 +620,7 @@ static INLINE int udp_read_connect(SOCKET_T sockfd)
 }
 
 static INLINE void udp_accept(SOCKET_T* sockfd, SOCKET_T* clientfd,
-                              int useAnyAddr, int port, func_args* args)
+                              int useAnyAddr, word16 port, func_args* args)
 {
     SOCKADDR_IN_T addr;
 
@@ -673,7 +671,7 @@ static INLINE void udp_accept(SOCKET_T* sockfd, SOCKET_T* clientfd,
 }
 
 static INLINE void tcp_accept(SOCKET_T* sockfd, SOCKET_T* clientfd,
-                              func_args* args, int port, int useAnyAddr,
+                              func_args* args, word16 port, int useAnyAddr,
                               int udp)
 {
     SOCKADDR_IN_T client;
@@ -863,6 +861,7 @@ static INLINE unsigned int my_psk_server_cb(CYASSL* ssl, const char* identity,
 
 static INLINE int myVerify(int preverify, CYASSL_X509_STORE_CTX* store)
 {
+    (void)preverify;
     char buffer[CYASSL_MAX_ERROR_SZ];
 
 #ifdef OPENSSL_EXTRA
@@ -1147,7 +1146,8 @@ static INLINE int CurrentDir(const char* str)
         if (ptr == NULL)
             return;
 
-        mt = (memoryTrack*)((byte*)ptr - sizeof(memoryTrack));
+        mt = (memoryTrack*)ptr;
+        --mt;   /* same as minus sizeof(memoryTrack), removes header */
 
 #ifdef DO_MEM_STATS 
         ourMemStats.currentBytes -= mt->u.hint.thisSize; 
@@ -1163,7 +1163,8 @@ static INLINE int CurrentDir(const char* str)
 
         if (ptr) {
             /* if realloc is bigger, don't overread old ptr */
-            memoryTrack* mt = (memoryTrack*)((byte*)ptr - sizeof(memoryTrack));
+            memoryTrack* mt = (memoryTrack*)ptr;
+            --mt;  /* same as minus sizeof(memoryTrack), removes header */
 
             if (mt->u.hint.thisSize < sz)
                 sz = mt->u.hint.thisSize;
@@ -1340,11 +1341,19 @@ static INLINE int myMacEncryptCb(CYASSL* ssl, unsigned char* macOut,
     /* hmac, not needed if aead mode */
     CyaSSL_SetTlsHmacInner(ssl, myInner, macInSz, macContent, macVerify);
 
-    HmacSetKey(&hmac, CyaSSL_GetHmacType(ssl),
+    ret = HmacSetKey(&hmac, CyaSSL_GetHmacType(ssl),
                CyaSSL_GetMacSecret(ssl, macVerify), CyaSSL_GetHmacSize(ssl));
-    HmacUpdate(&hmac, myInner, sizeof(myInner));
-    HmacUpdate(&hmac, macIn, macInSz);
-    HmacFinal(&hmac, macOut);
+    if (ret != 0)
+        return ret;
+    ret = HmacUpdate(&hmac, myInner, sizeof(myInner));
+    if (ret != 0)
+        return ret;
+    ret = HmacUpdate(&hmac, macIn, macInSz);
+    if (ret != 0)
+        return ret;
+    ret = HmacFinal(&hmac, macOut);
+    if (ret != 0)
+        return ret;
 
 
     /* encrypt setup on first time */
@@ -1389,7 +1398,7 @@ static INLINE int myDecryptVerifyCb(CYASSL* ssl,
     unsigned int padByte = 0;
     Hmac hmac;
     byte myInner[CYASSL_TLS_HMAC_INNER_SZ];
-    byte verify[INNER_HASH_SIZE];
+    byte verify[MAX_DIGEST_SIZE];
     const char* tlsStr = "TLS";
 
     /* example supports (d)tls aes */
@@ -1447,11 +1456,19 @@ static INLINE int myDecryptVerifyCb(CYASSL* ssl,
 
     CyaSSL_SetTlsHmacInner(ssl, myInner, macInSz, macContent, macVerify);
 
-    HmacSetKey(&hmac, CyaSSL_GetHmacType(ssl),
+    ret = HmacSetKey(&hmac, CyaSSL_GetHmacType(ssl),
                CyaSSL_GetMacSecret(ssl, macVerify), digestSz);
-    HmacUpdate(&hmac, myInner, sizeof(myInner));
-    HmacUpdate(&hmac, decOut + ivExtra, macInSz);
-    HmacFinal(&hmac, verify);
+    if (ret != 0)
+        return ret;
+    ret = HmacUpdate(&hmac, myInner, sizeof(myInner));
+    if (ret != 0)
+        return ret;
+    ret = HmacUpdate(&hmac, decOut + ivExtra, macInSz);
+    if (ret != 0)
+        return ret;
+    ret = HmacFinal(&hmac, verify);
+    if (ret != 0)
+        return ret;
 
     if (memcmp(verify, decOut + decSz - digestSz - pad - padByte,
                digestSz) != 0) {
@@ -1515,7 +1532,10 @@ static INLINE int myEccSign(CYASSL* ssl, const byte* in, word32 inSz,
     (void)ssl;
     (void)ctx;
 
-    InitRng(&rng);
+    ret = InitRng(&rng);
+    if (ret != 0)
+        return ret;
+
     ecc_init(&myKey);
     
     ret = EccPrivateKeyDecode(key, &idx, &myKey, keySz);    
@@ -1562,7 +1582,10 @@ static INLINE int myRsaSign(CYASSL* ssl, const byte* in, word32 inSz,
     (void)ssl;
     (void)ctx;
 
-    InitRng(&rng);
+    ret = InitRng(&rng);
+    if (ret != 0)
+        return ret;
+
     InitRsaKey(&myKey, NULL);
     
     ret = RsaPrivateKeyDecode(key, &idx, &myKey, keySz);    
@@ -1613,7 +1636,10 @@ static INLINE int myRsaEnc(CYASSL* ssl, const byte* in, word32 inSz,
     (void)ssl;
     (void)ctx;
 
-    InitRng(&rng);
+    ret = InitRng(&rng);
+    if (ret != 0)
+        return ret;
+
     InitRsaKey(&myKey, NULL);
     
     ret = RsaPublicKeyDecode(key, &idx, &myKey, keySz);
@@ -1671,6 +1697,9 @@ static INLINE void SetupPkCallbacks(CYASSL_CTX* ctx, CYASSL* ssl)
 }
 
 #endif /* HAVE_PK_CALLBACKS */
+
+
+
 
 
 #if defined(__hpux__) || defined(__MINGW32__)

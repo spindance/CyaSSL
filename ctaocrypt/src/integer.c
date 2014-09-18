@@ -1,6 +1,6 @@
 /* integer.c
  *
- * Copyright (C) 2006-2013 wolfSSL Inc.
+ * Copyright (C) 2006-2014 wolfSSL Inc.
  *
  * This file is part of CyaSSL.
  *
@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 
@@ -176,6 +176,28 @@ mp_count_bits (mp_int * a)
     q >>= ((mp_digit) 1);
   }
   return r;
+}
+
+
+int mp_leading_bit (mp_int * a)
+{
+    int bit = 0;
+    mp_int t;
+
+    if (mp_init_copy(&t, a) != MP_OKAY)
+        return 0;
+
+    while (mp_iszero(&t) == 0) {
+#ifndef MP_8BIT
+        bit = (t.dp[0] & 0x80) != 0;
+#else
+        bit = (t.dp[0] | ((t.dp[1] & 0x01) << 7)) & 0x80 != 0;
+#endif
+        if (mp_div_2d (&t, 8, &t, NULL) != MP_OKAY)
+            break;
+    }
+    mp_clear(&t);
+    return bit;
 }
 
 
@@ -3743,7 +3765,7 @@ int mp_sqrmod (mp_int * a, mp_int * b, mp_int * c)
 #endif
 
 
-#if defined(HAVE_ECC) || !defined(NO_PWDBASED)
+#if defined(HAVE_ECC) || !defined(NO_PWDBASED) || defined(CYASSL_SNIFFER) || defined(CYASSL_HAVE_WOLFSCEP)
 
 /* single digit addition */
 int mp_add_d (mp_int* a, mp_digit b, mp_int* c)

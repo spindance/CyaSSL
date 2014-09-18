@@ -1,6 +1,6 @@
 /* tfm.h
  *
- * Copyright (C) 2006-2013 wolfSSL Inc.
+ * Copyright (C) 2006-2014 wolfSSL Inc.
  *
  * This file is part of CyaSSL.
  *
@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 
@@ -293,7 +293,7 @@ typedef struct {
 #define TFM_MUL12
 #define TFM_MUL17
 #endif
-#ifdef TFM_SMALL_SET
+#ifdef TFM_HUGE_SET
 #define TFM_MUL20
 #define TFM_MUL24
 #define TFM_MUL28
@@ -316,7 +316,7 @@ typedef struct {
 #define TFM_SQR12
 #define TFM_SQR17
 #endif
-#ifdef TFM_SMALL_SET
+#ifdef TFM_HUGE_SET
 #define TFM_SQR20
 #define TFM_SQR24
 #define TFM_SQR28
@@ -490,6 +490,7 @@ int fp_exptmod(fp_int *a, fp_int *b, fp_int *c, fp_int *d);
 
 /* radix conersions */
 int fp_count_bits(fp_int *a);
+int fp_leading_bit(fp_int *a);
 
 int fp_unsigned_bin_size(fp_int *a);
 void fp_read_unsigned_bin(fp_int *a, unsigned char *b, int c);
@@ -509,104 +510,104 @@ void s_fp_add(fp_int *a, fp_int *b, fp_int *c);
 void s_fp_sub(fp_int *a, fp_int *b, fp_int *c);
 void fp_reverse(unsigned char *s, int len);
 
-void fp_mul_comba(fp_int *A, fp_int *B, fp_int *C);
+void fp_mul_comba(fp_int *a, fp_int *b, fp_int *c);
 
 #ifdef TFM_SMALL_SET
-void fp_mul_comba_small(fp_int *A, fp_int *B, fp_int *C);
+void fp_mul_comba_small(fp_int *a, fp_int *b, fp_int *c);
 #endif
 
 #ifdef TFM_MUL3
-void fp_mul_comba3(fp_int *A, fp_int *B, fp_int *C);
+void fp_mul_comba3(fp_int *a, fp_int *b, fp_int *c);
 #endif
 #ifdef TFM_MUL4
-void fp_mul_comba4(fp_int *A, fp_int *B, fp_int *C);
+void fp_mul_comba4(fp_int *a, fp_int *b, fp_int *c);
 #endif
 #ifdef TFM_MUL6
-void fp_mul_comba6(fp_int *A, fp_int *B, fp_int *C);
+void fp_mul_comba6(fp_int *a, fp_int *b, fp_int *c);
 #endif
 #ifdef TFM_MUL7
-void fp_mul_comba7(fp_int *A, fp_int *B, fp_int *C);
+void fp_mul_comba7(fp_int *a, fp_int *b, fp_int *c);
 #endif
 #ifdef TFM_MUL8
-void fp_mul_comba8(fp_int *A, fp_int *B, fp_int *C);
+void fp_mul_comba8(fp_int *a, fp_int *b, fp_int *c);
 #endif
 #ifdef TFM_MUL9
-void fp_mul_comba9(fp_int *A, fp_int *B, fp_int *C);
+void fp_mul_comba9(fp_int *a, fp_int *b, fp_int *c);
 #endif
 #ifdef TFM_MUL12
-void fp_mul_comba12(fp_int *A, fp_int *B, fp_int *C);
+void fp_mul_comba12(fp_int *a, fp_int *b, fp_int *c);
 #endif
 #ifdef TFM_MUL17
-void fp_mul_comba17(fp_int *A, fp_int *B, fp_int *C);
+void fp_mul_comba17(fp_int *a, fp_int *b, fp_int *c);
 #endif
 
 #ifdef TFM_MUL20
-void fp_mul_comba20(fp_int *A, fp_int *B, fp_int *C);
+void fp_mul_comba20(fp_int *a, fp_int *b, fp_int *c);
 #endif
 #ifdef TFM_MUL24
-void fp_mul_comba24(fp_int *A, fp_int *B, fp_int *C);
+void fp_mul_comba24(fp_int *a, fp_int *b, fp_int *c);
 #endif
 #ifdef TFM_MUL28
-void fp_mul_comba28(fp_int *A, fp_int *B, fp_int *C);
+void fp_mul_comba28(fp_int *a, fp_int *b, fp_int *c);
 #endif
 #ifdef TFM_MUL32
-void fp_mul_comba32(fp_int *A, fp_int *B, fp_int *C);
+void fp_mul_comba32(fp_int *a, fp_int *b, fp_int *c);
 #endif
 #ifdef TFM_MUL48
-void fp_mul_comba48(fp_int *A, fp_int *B, fp_int *C);
+void fp_mul_comba48(fp_int *a, fp_int *b, fp_int *c);
 #endif
 #ifdef TFM_MUL64
-void fp_mul_comba64(fp_int *A, fp_int *B, fp_int *C);
+void fp_mul_comba64(fp_int *a, fp_int *b, fp_int *c);
 #endif
 
-void fp_sqr_comba(fp_int *A, fp_int *B);
+void fp_sqr_comba(fp_int *a, fp_int *b);
 
 #ifdef TFM_SMALL_SET
-void fp_sqr_comba_small(fp_int *A, fp_int *B);
+void fp_sqr_comba_small(fp_int *a, fp_int *b);
 #endif
 
 #ifdef TFM_SQR3
-void fp_sqr_comba3(fp_int *A, fp_int *B);
+void fp_sqr_comba3(fp_int *a, fp_int *b);
 #endif
 #ifdef TFM_SQR4
-void fp_sqr_comba4(fp_int *A, fp_int *B);
+void fp_sqr_comba4(fp_int *a, fp_int *b);
 #endif
 #ifdef TFM_SQR6
-void fp_sqr_comba6(fp_int *A, fp_int *B);
+void fp_sqr_comba6(fp_int *a, fp_int *b);
 #endif
 #ifdef TFM_SQR7
-void fp_sqr_comba7(fp_int *A, fp_int *B);
+void fp_sqr_comba7(fp_int *a, fp_int *b);
 #endif
 #ifdef TFM_SQR8
-void fp_sqr_comba8(fp_int *A, fp_int *B);
+void fp_sqr_comba8(fp_int *a, fp_int *b);
 #endif
 #ifdef TFM_SQR9
-void fp_sqr_comba9(fp_int *A, fp_int *B);
+void fp_sqr_comba9(fp_int *a, fp_int *b);
 #endif
 #ifdef TFM_SQR12
-void fp_sqr_comba12(fp_int *A, fp_int *B);
+void fp_sqr_comba12(fp_int *a, fp_int *b);
 #endif
 #ifdef TFM_SQR17
-void fp_sqr_comba17(fp_int *A, fp_int *B);
+void fp_sqr_comba17(fp_int *a, fp_int *b);
 #endif
 
 #ifdef TFM_SQR20
-void fp_sqr_comba20(fp_int *A, fp_int *B);
+void fp_sqr_comba20(fp_int *a, fp_int *b);
 #endif
 #ifdef TFM_SQR24
-void fp_sqr_comba24(fp_int *A, fp_int *B);
+void fp_sqr_comba24(fp_int *a, fp_int *b);
 #endif
 #ifdef TFM_SQR28
-void fp_sqr_comba28(fp_int *A, fp_int *B);
+void fp_sqr_comba28(fp_int *a, fp_int *b);
 #endif
 #ifdef TFM_SQR32
-void fp_sqr_comba32(fp_int *A, fp_int *B);
+void fp_sqr_comba32(fp_int *a, fp_int *b);
 #endif
 #ifdef TFM_SQR48
-void fp_sqr_comba48(fp_int *A, fp_int *B);
+void fp_sqr_comba48(fp_int *a, fp_int *b);
 #endif
 #ifdef TFM_SQR64
-void fp_sqr_comba64(fp_int *A, fp_int *B);
+void fp_sqr_comba64(fp_int *a, fp_int *b);
 #endif
 /*extern const char *fp_s_rmap;*/
 
@@ -641,7 +642,7 @@ int  mp_mul (mp_int * a, mp_int * b, mp_int * c);
 int  mp_mulmod (mp_int * a, mp_int * b, mp_int * c, mp_int * d);
 int  mp_mod(mp_int *a, mp_int *b, mp_int *c);
 int  mp_invmod(mp_int *a, mp_int *b, mp_int *c);
-int  mp_exptmod (mp_int * G, mp_int * X, mp_int * P, mp_int * Y);
+int  mp_exptmod (mp_int * g, mp_int * x, mp_int * p, mp_int * y);
 
 int  mp_cmp(mp_int *a, mp_int *b);
 int  mp_cmp_d(mp_int *a, mp_digit b);
@@ -655,13 +656,14 @@ int  mp_copy(fp_int* a, fp_int* b);
 int  mp_isodd(mp_int* a);
 int  mp_iszero(mp_int* a);
 int  mp_count_bits(mp_int *a);
+int  mp_leading_bit(mp_int *a);
 int  mp_set_int(fp_int *a, fp_digit b);
 void mp_rshb(mp_int *a, int x);
 
 #ifdef HAVE_ECC
     int mp_read_radix(mp_int* a, const char* str, int radix);
     int mp_set(fp_int *a, fp_digit b);
-    int mp_sqr(fp_int *A, fp_int *B);
+    int mp_sqr(fp_int *a, fp_int *b);
     int mp_montgomery_reduce(fp_int *a, fp_int *m, fp_digit mp);
     int mp_montgomery_setup(fp_int *a, fp_digit *rho);
     int mp_div_2(fp_int * a, fp_int * b);

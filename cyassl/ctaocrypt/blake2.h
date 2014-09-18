@@ -1,6 +1,6 @@
 /* blake2.h
  *
- * Copyright (C) 2006-2013 wolfSSL Inc.
+ * Copyright (C) 2006-2014 wolfSSL Inc.
  *
  * This file is part of CyaSSL.
  *
@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 
@@ -33,7 +33,8 @@
 
 /* in bytes, variable digest size up to 512 bits (64 bytes) */
 enum {
-    BLAKE2B_ID = 7    /* hash type unique */
+    BLAKE2B_ID  = 7,   /* hash type unique */
+    BLAKE2B_256 = 32   /* 256 bit type, SSL default */
 };
 
 

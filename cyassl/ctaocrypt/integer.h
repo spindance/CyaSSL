@@ -1,6 +1,6 @@
 /* integer.h
  *
- * Copyright (C) 2006-2013 wolfSSL Inc.
+ * Copyright (C) 2006-2014 wolfSSL Inc.
  *
  * This file is part of CyaSSL.
  *
@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 /*
@@ -225,6 +225,7 @@ int  mp_exptmod (mp_int * G, mp_int * X, mp_int * P, mp_int * Y);
 
 /* functions added to support above needed, removed TOOM and KARATSUBA */
 int  mp_count_bits (mp_int * a);
+int  mp_leading_bit (mp_int * a);
 int  mp_init_copy (mp_int * a, mp_int * b);
 int  mp_copy (mp_int * a, mp_int * b);
 int  mp_grow (mp_int * a, int size);
@@ -285,6 +286,7 @@ int  mp_2expt (mp_int * a, int b);
 int  mp_reduce_2k_setup(mp_int *a, mp_digit *d);
 int  mp_add_d (mp_int* a, mp_digit b, mp_int* c);
 int mp_set_int (mp_int * a, unsigned long b);
+int mp_sub_d (mp_int * a, mp_digit b, mp_int * c);
 /* end support added functions */
 
 /* added */
@@ -302,10 +304,6 @@ int mp_init_multi(mp_int* a, mp_int* b, mp_int* c, mp_int* d, mp_int* e,
     int mp_prime_is_prime (mp_int * a, int t, int *result);
     int mp_gcd (mp_int * a, mp_int * b, mp_int * c);
     int mp_lcm (mp_int * a, mp_int * b, mp_int * c);
-#endif
-
-#if defined(HAVE_ECC) || !defined(NO_PWDBASED)
-    int mp_sub_d (mp_int * a, mp_digit b, mp_int * c);
 #endif
 
 #ifdef __cplusplus

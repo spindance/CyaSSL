@@ -113,12 +113,17 @@ PROJECT_DIR=$(notdir $(CURDIR))
 # Convention for where the build detritus ends up
 #
 # We build a tree of object files (.o) and dependancy files 
-# in $(TOP_BUILD_DIR).
+# in $(OBJ_DIR).
 #
 # The tree matches the structure of the source tree.
 #
 TOP_BUILD_DIR   = obj/
-BUILD_DIR	= $(TOP_BUILD_DIR)$(PROJECT_DIR)/
+
+ifeq ($(OBJ_DIR),)
+OBJ_DIR=$(TOP_BUILD_DIR)
+endif
+
+BUILD_DIR	= $(OBJ_DIR)$(PROJECT_DIR)/
 
 include makedefs
 
@@ -134,11 +139,13 @@ REPO_LIST-y += ../$(THIS_REPO)
 export REPO_LIST = $(REPO_LIST-y)
 
 # Where we get pieces from...
-INCLUDE_DIRS-y                                 += -I.
 INCLUDE_DIRS-$(CONFIG_APP)                     += -I../$(APP_DIR)/include
 INCLUDE_DIRS-$(CONFIG_APP)                     += -I../$(APP_DIR)/include/generated
+INCLUDE_DIRS-$(CONFIG_APP)                     += -I../$(APP_DIR)/source
 INCLUDE_DIRS-$(CONFIG_QUICKSTART)              += -I../$(QUICKSTART_DIR)/include
 INCLUDE_DIRS-$(CONFIG_QUICKSTART)              += -I../$(QUICKSTART_DIR)/include/generated
+INCLUDE_DIRS-$(CONFIG_QUICKSTART)              += -I../$(QUICKSTART_DIR)/source
+INCLUDE_DIRS-y                                 += -I.
 INCLUDE_DIRS-y                                 += -I$(RTOS_SOURCE_DIR)/include
 INCLUDE_DIRS-$(CONFIG_FREERTOS_PORT_ARM_CM3)   += -I$(RTOS_SOURCE_DIR)/portable/GCC/ARM_CM3
 INCLUDE_DIRS-$(CONFIG_FREERTOS_PORT_ARM_CM4F)  += -I$(RTOS_SOURCE_DIR)/portable/GCC/ARM_CM4F
@@ -173,6 +180,7 @@ SOURCE-y   += ctaocrypt/src/sha.c
 SOURCE-y   += ctaocrypt/src/arc4.c
 SOURCE-y   += ctaocrypt/src/md5.c
 SOURCE-y   += ctaocrypt/src/integer.c
+SOURCE-y   += ctaocrypt/src/port.c
 
 SOURCE := $(SOURCE-y)
 
@@ -216,6 +224,7 @@ CPPFLAGS-$(CONFIG_STM32F401XX)          += -D"STM32F401xx"
 CPPFLAGS-y                              += -D"USE_STDPERIPH_DRIVER"
 CPPFLAGS-y                              += -D"USE_STM324xG_EVAL"
 CPPFLAGS-y                              += -D USE_FLOATING_POINT
+CPPFLAGS-$(CONFIG_NDEBUG_ENA)           += -D"NDEBUG"
 CPPFLAGS-y                              += $(INCLUDE_DIRS-y)
 
 CFLAGS += $(CPPFLAGS-y)
@@ -229,7 +238,7 @@ SEP = '-----------------------------------------------------------------------+-
 
 .PHONY: all
 
-all: obj/cyassl.a
+all: $(OBJ_DIR)cyassl.a
 	@# This line prevents warning when nothing to be done for all.
 
 ifndef MAKECMDGOALS
@@ -259,7 +268,7 @@ alldefconfig randconfig listnewconfig olddefconfig "))
 endif
 endif
 
-obj/cyassl.a: $(OBJS)
+$(OBJ_DIR)cyassl.a: $(OBJS)
 	@echo "+--$(AR) $@"
 	$(Q)$(AR) -rc $@ $^
 
@@ -294,13 +303,14 @@ $(BUILD_DIR)%.d : %.c
 
 .PHONY: clean
 clean :
-ifneq ($(strip $(TOP_BUILD_DIR)),)
+ifneq ($(strip $(OBJ_DIR)),)
 	@echo $(SEP)
 	@echo "+--cyassl library clean"
 	@echo $(SEP)
-	$(RM) -rf $(TOP_BUILD_DIR)*
+	$(RM) -rf obj/*
+	$(RM) -rf mfgObj/*
 else
-	$(Q)echo "TOP_BUILD_DIR is not defined or empty, can't clean."
+	$(Q)echo "OBJ_DIR is not defined or empty, can't clean."
 endif
 
 .PHONY: distclean
