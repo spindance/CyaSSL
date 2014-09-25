@@ -306,7 +306,7 @@ int EmbedSend(CYASSL* ssl, char *buf, int sz, void *ctx)
     int result = setsockopt (sd, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeOfTimeOut);
 
     if (result<0) {
-      logError("setsockopt SO_SNDTIMEO failed(%d).",result);
+      logOffNominal("setsockopt SO_SNDTIMEO failed(%d).",result);
       return CYASSL_CBIO_ERR_GENERAL;
     }
 
