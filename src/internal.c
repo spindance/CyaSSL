@@ -5964,6 +5964,7 @@ int SendCertificateRequest(CYASSL* ssl)
 }
 #endif /* !NO_CERTS */
 
+#define CYASSL_DETECT_BUG_4195 1
 
 int SendData(CYASSL* ssl, const void* data, int sz)
 {
@@ -5981,9 +5982,16 @@ int SendData(CYASSL* ssl, const void* data, int sz)
             return  err;
     }
 
+#if defined CYASSL_DETECT_BUG_4195 && CYASSL_DETECT_BUG_4195
+    bool calledSendBuffered = false;
+    word32 outputBufferLength = ssl->buffers.outputBuffer.length;
+#endif
     /* last time system socket output buffer was full, try again to send */
     if (ssl->buffers.outputBuffer.length > 0) {
         CYASSL_MSG("output buffer was full, trying to send again");
+        #if defined CYASSL_DETECT_BUG_4195 && CYASSL_DETECT_BUG_4195
+            calledSendBuffered = true;
+        #endif
         if ( (ssl->error = SendBuffered(ssl)) < 0) {
             CYASSL_ERROR(ssl->error);
             if (ssl->error == SOCKET_ERROR_E && ssl->options.connReset)
@@ -6006,6 +6014,12 @@ int SendData(CYASSL* ssl, const void* data, int sz)
         byte* out;
         byte* sendBuffer = (byte*)data + sent;  /* may switch on comp */
         int   buffSz = len;                       /* may switch on comp */
+
+        #if defined CYASSL_DETECT_BUG_4195 && CYASSL_DETECT_BUG_4195
+            if (len<0) {
+                logFatal("ALII-4195 called=%d len=%d sz=%d sent=%d prevSent=%d plainSz=%d outputBufferLength=%d", calledSendBuffered, len, sz, sent, ssl->buffers.prevSent, ssl->buffers.plainSz, outputBufferLength);
+            }
+        #endif
 #ifdef HAVE_LIBZ
         byte  comp[MAX_RECORD_SIZE + MAX_COMP_EXTRA];
 #endif
