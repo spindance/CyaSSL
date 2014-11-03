@@ -246,7 +246,7 @@ int EmbedReceive(CYASSL *ssl, char *buf, int sz, void *ctx)
     }
     static int raeRecvCnt = 0;
     raeRecvCnt++;
-    if (raeRecvCnt>10) {
+    if (raeRecvCnt>30) {
         logInfo("@@@@ MaxRecvLen= %d @@@@", raeMaxRecvLen);
         raeRecvCnt = 0;
     }
@@ -332,7 +332,7 @@ int EmbedSend(CYASSL* ssl, char *buf, int sz, void *ctx)
     }
     static int raeSendCnt = 0;
     raeSendCnt++;
-    if (raeSendCnt>10) {
+    if (raeSendCnt>30) {
         logInfo("@@@@ MaxSendLen= %d @@@@", raeMaxSendLen);
         raeSendCnt = 0;
     }
