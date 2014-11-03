@@ -239,6 +239,18 @@ int EmbedReceive(CYASSL *ssl, char *buf, int sz, void *ctx)
     }
 #endif
 
+    static int raeMaxRecvLen = 0;
+    if (sz>raeMaxRecvLen) {
+        raeMaxRecvLen = sz;
+        logInfo("@@@@ MaxRecvLen: %d @@@@", raeMaxRecvLen);
+    }
+    static int raeRecvCnt = 0;
+    raeRecvCnt++;
+    if (raeRecvCnt>10) {
+        logInfo("@@@@ MaxRecvLen= %d @@@@", raeMaxRecvLen);
+        raeRecvCnt = 0;
+    }
+
     CYASSL_DEBUG("EmbedReceive - lwip_recv ssl=%08x sd=%08x, buf=%08x len=%u flags=%x", (unsigned)ssl, (unsigned)sd, (unsigned)buf, sz, ssl->wflags);
     recvd = (int)RECV_FUNCTION(sd, buf, sz, ssl->rflags);
     CYASSL_DEBUG("EmbedReceive - lwip_recv ssl=%08x sd=%08x, buf=%08x len=%u flags=%x returned=%d", (unsigned)ssl, (unsigned)sd, (unsigned)buf, sz, ssl->wflags, recvd);
@@ -312,6 +324,18 @@ int EmbedSend(CYASSL* ssl, char *buf, int sz, void *ctx)
 
     CYASSL_ENTER("EmbedSend");
     CYASSL_DEBUG("EmbedSend - lwip_send ssl=%08x sd=%08x, buf=%08x len=%u flags=%x", (unsigned)ssl, (unsigned)sd, (unsigned)&buf[sz - len], len, ssl->wflags);
+
+    static int raeMaxSendLen = 0;
+    if (len>raeMaxSendLen) {
+        raeMaxSendLen = len;
+        logInfo("@@@@ MaxSendLen: %d @@@@", raeMaxSendLen);
+    }
+    static int raeSendCnt = 0;
+    raeSendCnt++;
+    if (raeSendCnt>10) {
+        logInfo("@@@@ MaxSendLen= %d @@@@", raeMaxSendLen);
+        raeSendCnt = 0;
+    }
 
     sent = (int)SEND_FUNCTION(sd, &buf[sz - len], len, ssl->wflags);
     CYASSL_DEBUG("EmbedSend - lwip_send ssl=%08x sd=%08x, buf=%08x len=%u flags=%x returned=%d", (unsigned)ssl, (unsigned)sd, (unsigned)&buf[sz - len], len, ssl->wflags, sent);
