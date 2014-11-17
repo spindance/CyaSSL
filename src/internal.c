@@ -1629,13 +1629,15 @@ int InitSSL(CYASSL* ssl, CYASSL_CTX* ctx)
 
     /* all done with init, now can return errors, call other stuff */
 
-    /* increment CTX reference count */
-    if (LockMutex(&ctx->countMutex) != 0) {
-        CYASSL_MSG("Couldn't lock CTX count mutex");
-        return BAD_MUTEX_E;
-    }
-    ctx->refCount++;
-    UnLockMutex(&ctx->countMutex);
+    #ifndef ALII_4682_CYASSL_FREE_WILL_NOT_FREE_CONTEXT_DONT_LINK_REF_COUNTS
+        /* increment CTX reference count */
+        if (LockMutex(&ctx->countMutex) != 0) {
+            CYASSL_MSG("Couldn't lock CTX count mutex");
+            return BAD_MUTEX_E;
+        }
+        ctx->refCount++;
+        UnLockMutex(&ctx->countMutex);
+    #endif
 
     /* arrays */
     ssl->arrays = (Arrays*)XMALLOC(sizeof(Arrays), ssl->heap,
@@ -1947,7 +1949,9 @@ void FreeHandshakeResources(CYASSL* ssl)
 
 void FreeSSL(CYASSL* ssl)
 {
-    FreeSSL_Ctx(ssl->ctx);  /* will decrement and free underyling CTX if 0 */
+    #ifndef ALII_4682_CYASSL_FREE_WILL_NOT_FREE_CONTEXT_DONT_LINK_REF_COUNTS
+        FreeSSL_Ctx(ssl->ctx);  /* will decrement and free underyling CTX if 0 */
+    #endif
     SSL_ResourceFree(ssl);
     XFREE(ssl, ssl->heap, DYNAMIC_TYPE_SSL);
 }
