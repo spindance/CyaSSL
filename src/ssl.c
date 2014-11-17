@@ -2096,6 +2096,12 @@ int CyaSSL_Init(void)
                 XFREE(der.buffer, heap, dynamicType);
                 return BAD_FUNC_ARG;
             }
+            // begin SpinDance debugging code.
+            // See ALII-4519
+            if (!ctx->cm) {
+              logFatal("ctx->cm==0 ctx=%08x ctx->refCount=%u",(int)ctx, ctx->refCount);
+            }
+            // End SpinDance debugging code.
             return AddCA(ctx->cm, der, CYASSL_USER_CA, ctx->verifyPeer);
                                                           /* takes der over */
         }
