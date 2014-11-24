@@ -462,6 +462,7 @@ static int CyaSSL_read_internal(CYASSL* ssl, void* data, int sz, int peek)
 #ifdef HAVE_MAX_FRAGMENT
     ret = ReceiveData(ssl, (byte*)data,
                      min(sz, min(ssl->max_fragment, OUTPUT_RECORD_SIZE)), peek);
+    lprintfKnl("ssl rd maxfrag: %d \n", ssl->max_fragment);
 #else
     ret = ReceiveData(ssl, (byte*)data, min(sz, OUTPUT_RECORD_SIZE), peek);
 #endif

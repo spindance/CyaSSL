@@ -6007,6 +6007,7 @@ int SendData(CYASSL* ssl, const void* data, int sz)
 
     for (;;) {
 #ifdef HAVE_MAX_FRAGMENT
+        lprintfKnl("ssl send dt: %d \n", ssl->max_fragment);
         int   len = min(sz - sent, min(ssl->max_fragment, OUTPUT_RECORD_SIZE));
 #else
         int   len = min(sz - sent, OUTPUT_RECORD_SIZE);

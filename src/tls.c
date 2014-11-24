@@ -1093,6 +1093,7 @@ static int TLSX_MFL_Parse(CYASSL* ssl, byte* input, word16 length,
 
             return UNKNOWN_MAX_FRAG_LEN_E;
     }
+    lprintfKnl("tls mfl parse: %d \n", ssl->max_fragment);
 
 #ifndef NO_CYASSL_SERVER
     if (isRequest) {
