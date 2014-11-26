@@ -80,7 +80,6 @@
     #define FALSE 0
 #endif
 
-
 #ifdef HAVE_RTP_SYS 
     /* uses parital <time.h> structures */
     #define XTIME(tl)  (0)
@@ -96,7 +95,7 @@
     /* since Micrium not defining XTIME or XGMTIME, CERT_GEN not available */
 #elif defined(MICROCHIP_TCPIP_V5) || defined(MICROCHIP_TCPIP)
 
-#if defined(CONFIG_APP_ACULINK_BRIDGE) && CONFIG_APP_ACULINK_BRIDGE
+#if CYASSL_GMTIME_THREAD_SAFE
     #include "cstdlib/time_support.h"
     #define XTIME(t1) pic32_time((t1))
     #define XGMTIME(c) gmtimeThreadSafe((c))
@@ -2136,7 +2135,11 @@ int ValidateDate(const byte* date, byte format, int dateType)
 {
     time_t ltime;
     struct tm  certTime;
+#if CYASSL_GMTIME_THREAD_SAFE
+    struct tm localTime;
+#else
     struct tm* localTime;
+#endif
     int    i = 0;
 
     ltime = XTIME(0);
@@ -4742,7 +4745,11 @@ static int SetValidity(byte* output, int daysValid)
     int seqSz;
 
     time_t     ticks;
+#if CYASSL_GMTIME_THREAD_SAFE
+    struct tm now;
+#else
     struct tm* now;
+#endif
     struct tm  local;
 
     ticks = XTIME(0);
