@@ -47,7 +47,6 @@
 
 #include <cyassl/ctaocrypt/random.h>
 
-
 #ifndef NO_RC4
     #include <cyassl/ctaocrypt/arc4.h>
 #endif
@@ -96,10 +95,19 @@
     #define NO_TIME_H
     /* since Micrium not defining XTIME or XGMTIME, CERT_GEN not available */
 #elif defined(MICROCHIP_TCPIP_V5) || defined(MICROCHIP_TCPIP)
+
+#if defined(CONFIG_APP_ACULINK_BRIDGE) && CONFIG_APP_ACULINK_BRIDGE
+    #include "cstdlib/time_support.h"
+    #define XTIME(t1) pic32_time((t1))
+    #define XGMTIME(c) gmtimeThreadSafe((c))
+    #define XVALIDATE_DATE(d, f, t) ValidateDate((d), (f), (t))
+#else
     #include <time.h>
     #define XTIME(t1) pic32_time((t1))
     #define XGMTIME(c) gmtime((c))
     #define XVALIDATE_DATE(d, f, t) ValidateDate((d), (f), (t))
+#endif
+
 #elif defined(FREESCALE_MQX)
     #include <time.h>
     #define XTIME(t1) mqx_time((t1))
