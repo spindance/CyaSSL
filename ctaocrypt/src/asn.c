@@ -47,6 +47,7 @@
 
 #include <cyassl/ctaocrypt/random.h>
 
+
 #ifndef NO_RC4
     #include <cyassl/ctaocrypt/arc4.h>
 #endif
@@ -79,6 +80,7 @@
 #ifndef FALSE
     #define FALSE 0
 #endif
+
 
 #ifdef HAVE_RTP_SYS 
     /* uses parital <time.h> structures */
