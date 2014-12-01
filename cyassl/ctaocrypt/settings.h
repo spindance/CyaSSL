@@ -165,8 +165,6 @@
 #endif
 
 #ifdef MICROCHIP_TCPIP
-    #define CYASSL_GMTIME_THREAD_SAFE (defined(CONFIG_APP_ACULINK_BRIDGE) && CONFIG_APP_ACULINK_BRIDGE)
-
     /* include timer, NTP functions */
     #ifdef MICROCHIP_MPLAB_HARMONY
         #include "tcpip/tcpip.h"
