@@ -153,6 +153,11 @@
         #define XTIME(tl)  time((tl))
     #endif /* STACK_TRAP */
 
+#elif defined(CYASSL_GMTIME_THREAD_SAFE)
+    #include <time.h>
+    #define XTIME(t1) time((t1))
+    #define XGMTIME(c) CYASSL_GMTIME_THREAD_SAFE((c))
+    #define XVALIDATE_DATE(d, f, t) ValidateDate((d), (f), (t))
 #else
     /* default */
     /* uses complete <time.h> facility */
@@ -2128,7 +2133,6 @@ int ValidateDate(const byte* date, byte format, int dateType)
 {
     time_t ltime;
     struct tm  certTime;
-    struct tm* localTime;
     int    i = 0;
 
     ltime = XTIME(0);
@@ -2157,14 +2161,19 @@ int ValidateDate(const byte* date, byte format, int dateType)
         return 0;
     }
 
-    localTime = XGMTIME(&ltime);
+#ifdef CYASSL_GMTIME_THREAD_SAFE
+    struct tm localTime = CYASSL_GMTIME_THREAD_SAFE(&ltime);
+    struct tm* localTimeP = &localTime;
+#else
+    struct tm* localTimeP = XGMTIME(&ltime);
+#endif
 
     if (dateType == BEFORE) {
-        if (DateLessThan(localTime, &certTime))
+        if (DateLessThan(localTimeP, &certTime))
             return 0;
     }
     else
-        if (DateGreaterThan(localTime, &certTime))
+        if (DateGreaterThan(localTimeP, &certTime))
             return 0;
 
     return 1;
@@ -4734,14 +4743,19 @@ static int SetValidity(byte* output, int daysValid)
     int seqSz;
 
     time_t     ticks;
-    struct tm* now;
     struct tm  local;
 
     ticks = XTIME(0);
-    now   = XGMTIME(&ticks);
+
+#ifdef CYASSL_GMTIME_THREAD_SAFE
+    struct tm now = CYASSL_GMTIME_THREAD_SAFE(&ticks);
+    struct tm* nowP = &now;
+#else
+    struct tm* nowP = XGMTIME(&ticks);
+#endif
 
     /* before now */
-    local = *now;
+    local = *nowP;
     before[0] = ASN_GENERALIZED_TIME;
     beforeSz  = SetLength(ASN_GEN_TIME_SZ, before + 1) + 1;  /* gen tag */
 
@@ -4757,7 +4771,7 @@ static int SetValidity(byte* output, int daysValid)
     beforeSz += ASN_GEN_TIME_SZ;
     
     /* after now + daysValid */
-    local = *now;
+    local = *nowP;
     after[0] = ASN_GENERALIZED_TIME;
     afterSz  = SetLength(ASN_GEN_TIME_SZ, after + 1) + 1;  /* gen tag */
 
